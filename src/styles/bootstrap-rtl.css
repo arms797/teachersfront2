@@ -1,0 +1,25 @@
+/* نسخه سبک RTL برای Bootstrap 5.3 — فقط تغییرات ضروری */
+.container, .container-fluid {
+  direction: rtl;
+}
+.row {
+  --bs-gutter-x: 1.5rem;
+}
+.btn-group > .btn:not(:first-child) {
+  margin-right: -1px;
+  margin-left: 0;
+}
+.form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+.form-check-input {
+  float: right;
+  margin-right: -1.5em;
+}
+.breadcrumb {
+  justify-content: flex-start;
+}
+.nav, .navbar, .dropdown-menu {
+  direction: rtl;
+}
