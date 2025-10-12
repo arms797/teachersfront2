@@ -4,6 +4,10 @@ import Header from '../components/Header.jsx'
 import Users from '../components/dashboard/Users.jsx'
 import Roles from '../components/dashboard/Roles.jsx'
 import ResetPassword from '../components/dashboard/ResetPassword.jsx'
+import ChangePassword from '../components/dashboard/ChangePassword.jsx'
+import UpdateContact from '../components/dashboard/UpdateContact.jsx'
+import UserList from '../components/dashboard/UserList.jsx'
+
 import api from '../utils/apiClient.js'
 import { useNavigate } from 'react-router-dom'
 
@@ -22,7 +26,7 @@ export default function Dashboard({ onLogout }) {
         }
     }
 
-    async function handleChangePassword() {
+    /*async function handleChangePassword() {
         const current = prompt('رمز فعلی را وارد کنید:')
         if (!current) return
         const next = prompt('رمز جدید را وارد کنید:')
@@ -36,9 +40,9 @@ export default function Dashboard({ onLogout }) {
         } catch (err) {
             setMessage(err.message)
         }
-    }
+    }*/
 
-    async function handleUpdateContact() {
+    /*async function handleUpdateContact() {
         const mobile = prompt('شماره موبایل جدید:')
         const email = prompt('ایمیل جدید:')
         try {
@@ -47,13 +51,17 @@ export default function Dashboard({ onLogout }) {
         } catch (err) {
             setMessage(err.message)
         }
-    }
+    }*/
 
     function renderContent() {
         switch (activePage) {
             case 'users': return <Users />
             case 'roles': return <Roles />
             case 'reset': return <ResetPassword />
+            case 'changePassword': return <ChangePassword />
+            case 'updateContact': return <UpdateContact />
+            case 'users': return <UserList />
+
             default:
                 return (
                     <div className="card">
@@ -72,8 +80,6 @@ export default function Dashboard({ onLogout }) {
         <div className="d-flex" style={{ minHeight: '100vh' }}>
             <Sidebar
                 onSelectPage={setActivePage}
-                onChangePassword={handleChangePassword}
-                onUpdateContact={handleUpdateContact}
                 onLogout={handleLogout}
             />
             <main className="flex-grow-1">

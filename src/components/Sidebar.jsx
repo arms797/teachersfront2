@@ -24,9 +24,10 @@ export default function Sidebar({ onSelectPage, onChangePassword, onUpdateContac
                     {openGroups.users && (
                         <ul className="list-group list-group-flush">
                             <li className="list-group-item">
-                                <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('users')}>
+                                <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('users')}>
                                     کاربران
                                 </button>
+
                             </li>
                             <li className="list-group-item">
                                 <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('roles')}>
@@ -46,12 +47,17 @@ export default function Sidebar({ onSelectPage, onChangePassword, onUpdateContac
 
                 {/* عملیات کاربر حاضر */}
                 <div className="mt-3">
-                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={onChangePassword}>
+                    {/*<button className="btn btn-outline-secondary w-100 mb-2" onClick={onChangePassword}>
+                        تغییر رمز عبور
+                    </button>*/}
+                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('changePassword')}>
                         تغییر رمز عبور
                     </button>
-                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={onUpdateContact}>
+
+                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('updateContact')}>
                         تغییر موبایل/ایمیل
                     </button>
+
                     <button className="btn btn-outline-danger w-100" onClick={onLogout}>
                         خروج
                     </button>
