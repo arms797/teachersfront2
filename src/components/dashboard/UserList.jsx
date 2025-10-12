@@ -4,7 +4,7 @@ import api from '../../utils/apiClient.js'
 export default function UserList() {
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
+    const [message, setMessage] = useState(null)
 
     useEffect(() => {
         fetchUsers()
@@ -16,7 +16,7 @@ export default function UserList() {
             const res = await api.get('/api/users')
             setUsers(res)
         } catch (err) {
-            setError('خطا در دریافت کاربران')
+            setMessage('خطا در دریافت کاربران')
         } finally {
             setLoading(false)
         }
@@ -27,23 +27,38 @@ export default function UserList() {
             await api.post(`/api/users/${userId}/toggle-active`)
             fetchUsers()
         } catch (err) {
-            alert('خطا در تغییر وضعیت کاربر')
+            setMessage('خطا در تغییر وضعیت کاربر')
         }
     }
 
+    function handleAddUser() {
+        const username = prompt('نام کاربری:')
+        const fullName = prompt('نام کامل:')
+        const password = prompt('رمز عبور:')
+        if (!username || !fullName || !password) return
+
+        api.post('/api/users', { username, fullName, password })
+            .then(() => {
+                setMessage('کاربر جدید افزوده شد')
+                fetchUsers()
+            })
+            .catch(err => setMessage(err.message))
+    }
+
     function handleEdit(user) {
-        alert(`ویرایش کاربر: ${user.username}`)
-        // اینجا می‌تونی فرم ویرایش را باز کنی
+        const fullName = prompt('نام جدید:', user.fullName)
+        if (!fullName) return
+
+        api.put(`/api/users/${user.id}`, { ...user, fullName })
+            .then(() => {
+                setMessage('ویرایش انجام شد')
+                fetchUsers()
+            })
+            .catch(err => setMessage(err.message))
     }
 
     function handleRoles(user) {
-        alert(`مدیریت نقش‌های کاربر: ${user.username}`)
-        // اینجا می‌تونی مودال نقش‌ها را باز کنی
-    }
-
-    function handleAddUser() {
-        alert('افزودن کاربر جدید')
-        // اینجا می‌تونی فرم افزودن را باز کنی
+        alert(`نقش‌های کاربر ${user.fullName} هنوز پیاده‌سازی نشده`)
     }
 
     return (
@@ -55,7 +70,7 @@ export default function UserList() {
                 </button>
             </div>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+            {message && <div className="alert alert-info">{message}</div>}
             {loading ? (
                 <div>در حال بارگذاری...</div>
             ) : (
@@ -65,10 +80,10 @@ export default function UserList() {
                             <tr>
                                 <th>#</th>
                                 <th>نام کاربری</th>
-                                <th>نام کامل</th>
+                                <th>نام</th>
+                                <th>نام خانوادگی</th>
                                 <th>ایمیل</th>
                                 <th>موبایل</th>
-                                <th>مرکز</th> {/* ستون جدید */}
                                 <th>وضعیت</th>
                                 <th>عملیات</th>
                             </tr>
@@ -78,10 +93,10 @@ export default function UserList() {
                                 <tr key={u.id}>
                                     <td>{index + 1}</td>
                                     <td>{u.username}</td>
-                                    <td>{u.fullName}</td>
+                                    <td>{u.firstName}</td>
+                                    <td>{u.lastName}</td>
                                     <td>{u.email}</td>
                                     <td>{u.mobile}</td>
-                                    <td>{u.centerName || '—'}</td> {/* مقدار مرکز */}
                                     <td>
                                         <span className={`badge bg-${u.isActive ? 'success' : 'secondary'}`}>
                                             {u.isActive ? 'فعال' : 'غیرفعال'}
@@ -107,12 +122,11 @@ export default function UserList() {
                             ))}
                             {users.length === 0 && (
                                 <tr>
-                                    <td colSpan="8">هیچ کاربری یافت نشد.</td>
+                                    <td colSpan="7">هیچ کاربری یافت نشد.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-
                 </div>
             )}
         </div>

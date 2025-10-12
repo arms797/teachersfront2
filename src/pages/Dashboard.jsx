@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import Sidebar from '../components/Sidebar.jsx'
 import Header from '../components/Header.jsx'
-import Users from '../components/dashboard/Users.jsx'
 import Roles from '../components/dashboard/Roles.jsx'
 import ResetPassword from '../components/dashboard/ResetPassword.jsx'
 import ChangePassword from '../components/dashboard/ChangePassword.jsx'
@@ -26,36 +25,9 @@ export default function Dashboard({ onLogout }) {
         }
     }
 
-    /*async function handleChangePassword() {
-        const current = prompt('رمز فعلی را وارد کنید:')
-        if (!current) return
-        const next = prompt('رمز جدید را وارد کنید:')
-        if (!next) return
-        try {
-            const res = await api.post('/api/auth/change-password', {
-                CurrentPassword: current,
-                NewPassword: next
-            })
-            setMessage(res?.message || 'رمز عبور تغییر کرد')
-        } catch (err) {
-            setMessage(err.message)
-        }
-    }*/
-
-    /*async function handleUpdateContact() {
-        const mobile = prompt('شماره موبایل جدید:')
-        const email = prompt('ایمیل جدید:')
-        try {
-            const res = await api.post('/api/auth/update-contact', { Mobile: mobile, Email: email })
-            setMessage(res?.message || 'اطلاعات تماس بروزرسانی شد')
-        } catch (err) {
-            setMessage(err.message)
-        }
-    }*/
-
     function renderContent() {
         switch (activePage) {
-            case 'users': return <Users />
+            case 'users': return <UserList />
             case 'roles': return <Roles />
             case 'reset': return <ResetPassword />
             case 'changePassword': return <ChangePassword />
@@ -82,6 +54,7 @@ export default function Dashboard({ onLogout }) {
                 onSelectPage={setActivePage}
                 onLogout={handleLogout}
             />
+
             <main className="flex-grow-1">
                 <Header />
                 <div className="container-fluid p-3">

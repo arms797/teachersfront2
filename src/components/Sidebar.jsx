@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
 
-export default function Sidebar({ onSelectPage, onChangePassword, onUpdateContact, onLogout }) {
+import React, { useState } from 'react'
+export default function Sidebar({ onSelectPage, onLogout }) {
+
     const [openGroups, setOpenGroups] = useState({ users: true })
 
     function toggleGroup(key) {
