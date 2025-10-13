@@ -1,10 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../utils/apiClient.js'
+import UserModal from './UserModal.jsx'
+
 
 export default function UserList() {
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState(null)
+    const [showModal, setShowModal] = useState(false)
+    const [modalMode, setModalMode] = useState('add')
+    const [selectedUser, setSelectedUser] = useState(null)
+
+    function openAddModal() {
+        setModalMode('add')
+        setSelectedUser(null)
+        setShowModal(true)
+    }
+
+    function openEditModal(user) {
+        setModalMode('edit')
+        setSelectedUser(user)
+        setShowModal(true)
+    }
 
     useEffect(() => {
         fetchUsers()
@@ -65,7 +82,7 @@ export default function UserList() {
         <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h6 className="mb-0">لیست کاربران</h6>
-                <button className="btn btn-success btn-sm" onClick={handleAddUser}>
+                <button className="btn btn-success btn-sm" onClick={openAddModal}>
                     افزودن کاربر جدید
                 </button>
             </div>
@@ -107,7 +124,7 @@ export default function UserList() {
                                             <button className="btn btn-outline-primary btn-sm" onClick={() => handleRoles(u)}>
                                                 نقش‌ها
                                             </button>
-                                            <button className="btn btn-outline-warning btn-sm" onClick={() => handleEdit(u)}>
+                                            <button className="btn btn-outline-warning btn-sm" onClick={() => openEditModal(u)}>
                                                 ویرایش
                                             </button>
                                             <button
@@ -129,6 +146,15 @@ export default function UserList() {
                     </table>
                 </div>
             )}
+            {showModal && (
+                <UserModal
+                    mode={modalMode}
+                    user={selectedUser}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={fetchUsers}
+                />
+            )}
+
         </div>
     )
 }
