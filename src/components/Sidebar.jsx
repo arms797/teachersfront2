@@ -1,11 +1,20 @@
-
 import React, { useState } from 'react'
-export default function Sidebar({ onSelectPage, onLogout }) {
+import { useUser } from '../context/UserContext.jsx'
 
+export default function Sidebar({ onSelectPage, onLogout }) {
     const [openGroups, setOpenGroups] = useState({ users: true })
+    const { hasRole, loading } = useUser()
 
     function toggleGroup(key) {
         setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }))
+    }
+
+    if (loading) {
+        return (
+            <aside className="bg-white border-start shadow-sm" style={{ width: 260, minHeight: '100vh' }}>
+                <div className="p-3 text-center text-muted">در حال بارگذاری...</div>
+            </aside>
+        )
     }
 
     return (
@@ -17,40 +26,37 @@ export default function Sidebar({ onSelectPage, onLogout }) {
 
             <div className="p-2">
                 {/* گروه کاربران */}
-                <div className="mb-2">
-                    <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('users')}>
-                        <span className="ms-2">کاربران</span>
-                        <span className="float-end">{openGroups.users ? '▾' : '▸'}</span>
-                    </button>
-                    {openGroups.users && (
-                        <ul className="list-group list-group-flush">
-                            <li className="list-group-item">
-                                <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('users')}>
-                                    کاربران
-                                </button>
-
-                            </li>
-                            <li className="list-group-item">
-                                <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('roles')}>
-                                    نقش‌ها
-                                </button>
-                            </li>
-                            <li className="list-group-item">
-                                <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('reset')}>
-                                    بازیابی رمز عبور
-                                </button>
-                            </li>
-                        </ul>
-                    )}
-                </div>
-
+                {hasRole('admin') && (
+                    <div className="mb-2">
+                        <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('users')}>
+                            <span className="ms-2">کاربران</span>
+                            <span className="float-end">{openGroups.users ? '▾' : '▸'}</span>
+                        </button>
+                        {openGroups.users && (
+                            <ul className="list-group list-group-flush">
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('users')}>
+                                        کاربران
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('roles')}>
+                                        نقش‌ها
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
+                                    <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('reset')}>
+                                        بازیابی رمز عبور
+                                    </button>
+                                </li>
+                            </ul>
+                        )}
+                    </div>
+                )}
                 <hr />
 
                 {/* عملیات کاربر حاضر */}
                 <div className="mt-3">
-                    {/*<button className="btn btn-outline-secondary w-100 mb-2" onClick={onChangePassword}>
-                        تغییر رمز عبور
-                    </button>*/}
                     <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('changePassword')}>
                         تغییر رمز عبور
                     </button>

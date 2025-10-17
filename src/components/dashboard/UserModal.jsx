@@ -46,7 +46,7 @@ export default function UserModal({ mode, user, onClose, onSuccess }) {
             ...form,
             password: form.nationalCode || 'Spnu123'
         }
-
+        //console.log('ارسال به API:', payload)
         try {
             if (isEdit) {
                 await api.put(`/api/users/${user.id}`, payload)
@@ -73,7 +73,7 @@ export default function UserModal({ mode, user, onClose, onSuccess }) {
                     <div className="modal-body">
                         {message && <div className="alert alert-info">{message}</div>}
 
-                        <form onSubmit={handleSubmit} className="row g-3">
+                        <form onSubmit={handleSubmit} className="row g-3 align-item-center">
                             <div className="col-md-6">
                                 <label className="form-label">نام</label>
                                 <input type="text" name="firstName" className="form-control" value={form.firstName} onChange={handleChange} required />

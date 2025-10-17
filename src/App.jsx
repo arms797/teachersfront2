@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import { UserProvider } from './context/UserContext.jsx'
 
 function ProtectedRoute({ children, isAuthenticated }) {
   if (!isAuthenticated) {

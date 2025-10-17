@@ -40,3 +40,18 @@
 .read-the-docs {
   color: #888;
 }
+.with-sidebar {
+  transition: all 0.3s ease;
+}
+
+.full-width {
+  transition: all 0.3s ease;
+}
+.sidebar-slide {
+  transition: all 0.3s ease;
+}
+
+.sidebar-hidden {
+  transform: translateX(-100%);
+  opacity: 0;
+}

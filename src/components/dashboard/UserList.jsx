@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../utils/apiClient.js'
 import UserModal from './UserModal.jsx'
-
+import UserRolesModal from './UserRolesModal.jsx'
 
 export default function UserList() {
     const [users, setUsers] = useState([])
@@ -10,6 +10,8 @@ export default function UserList() {
     const [showModal, setShowModal] = useState(false)
     const [modalMode, setModalMode] = useState('add')
     const [selectedUser, setSelectedUser] = useState(null)
+    const [showRolesModal, setShowRolesModal] = useState(false)
+    //const [selectedUser, setSelectedUser] = useState(null)
 
     function openAddModal() {
         setModalMode('add')
@@ -22,7 +24,10 @@ export default function UserList() {
         setSelectedUser(user)
         setShowModal(true)
     }
-
+    function openRolesModal(user) {
+        setSelectedUser(user)
+        setShowRolesModal(true)
+    }
     useEffect(() => {
         fetchUsers()
     }, [])
@@ -32,6 +37,7 @@ export default function UserList() {
         try {
             const res = await api.get('/api/users')
             setUsers(res)
+            //console.log('کاربران دریافتی:', res)
         } catch (err) {
             setMessage('خطا در دریافت کاربران')
         } finally {
@@ -39,30 +45,30 @@ export default function UserList() {
         }
     }
 
-    async function toggleActive(userId) {
-        try {
-            await api.post(`/api/users/${userId}/toggle-active`)
-            fetchUsers()
-        } catch (err) {
-            setMessage('خطا در تغییر وضعیت کاربر')
-        }
-    }
+    /* async function toggleActive(userId) {
+         try {
+             await api.post(`/api/users/${userId}/toggle-active`)
+             fetchUsers()
+         } catch (err) {
+             setMessage('خطا در تغییر وضعیت کاربر')
+         }
+     }*/
 
-    function handleAddUser() {
-        const username = prompt('نام کاربری:')
-        const fullName = prompt('نام کامل:')
-        const password = prompt('رمز عبور:')
-        if (!username || !fullName || !password) return
+    /* function handleAddUser() {
+         const username = prompt('نام کاربری:')
+         const fullName = prompt('نام کامل:')
+         const password = prompt('رمز عبور:')
+         if (!username || !fullName || !password) return
+ 
+         api.post('/api/users', { username, fullName, password })
+             .then(() => {
+                 setMessage('کاربر جدید افزوده شد')
+                 fetchUsers()
+             })
+             .catch(err => setMessage(err.message))
+     }*/
 
-        api.post('/api/users', { username, fullName, password })
-            .then(() => {
-                setMessage('کاربر جدید افزوده شد')
-                fetchUsers()
-            })
-            .catch(err => setMessage(err.message))
-    }
-
-    function handleEdit(user) {
+    /*function handleEdit(user) {
         const fullName = prompt('نام جدید:', user.fullName)
         if (!fullName) return
 
@@ -72,6 +78,13 @@ export default function UserList() {
                 fetchUsers()
             })
             .catch(err => setMessage(err.message))
+    }*/
+    async function resetPass(id) {
+        try {
+            await api.post(`/api/users/${id}/reset-password`)
+        } catch (err) {
+            setMessage('خطا در ریست کردن رمز کاربر')
+        }
     }
 
     function handleRoles(user) {
@@ -80,9 +93,9 @@ export default function UserList() {
 
     return (
         <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex justify-content-between align-items-right mb-3 gap-4">
                 <h6 className="mb-0">لیست کاربران</h6>
-                <button className="btn btn-success btn-sm" onClick={openAddModal}>
+                <button className="btn btn-success btn-sm ms-auto" onClick={openAddModal}>
                     افزودن کاربر جدید
                 </button>
             </div>
@@ -92,15 +105,17 @@ export default function UserList() {
                 <div>در حال بارگذاری...</div>
             ) : (
                 <div className="table-responsive">
-                    <table className="table table-bordered table-sm align-middle text-center">
+                    <table className="table table-bordered table-sm align-middle text-center table-striped table-hover table-responsive">
                         <thead className="table-light">
                             <tr>
                                 <th>#</th>
                                 <th>نام کاربری</th>
                                 <th>نام</th>
                                 <th>نام خانوادگی</th>
+                                <th>کد ملی</th>
                                 <th>ایمیل</th>
                                 <th>موبایل</th>
+                                <th>مرکز</th>
                                 <th>وضعیت</th>
                                 <th>عملیات</th>
                             </tr>
@@ -112,8 +127,10 @@ export default function UserList() {
                                     <td>{u.username}</td>
                                     <td>{u.firstName}</td>
                                     <td>{u.lastName}</td>
+                                    <td>{u.nationalCode}</td>
                                     <td>{u.email}</td>
                                     <td>{u.mobile}</td>
+                                    <td>{u.centerCode}</td>
                                     <td>
                                         <span className={`badge bg-${u.isActive ? 'success' : 'secondary'}`}>
                                             {u.isActive ? 'فعال' : 'غیرفعال'}
@@ -121,18 +138,16 @@ export default function UserList() {
                                     </td>
                                     <td>
                                         <div className="d-flex gap-1 justify-content-center">
-                                            <button className="btn btn-outline-primary btn-sm" onClick={() => handleRoles(u)}>
-                                                نقش‌ها
-                                            </button>
                                             <button className="btn btn-outline-warning btn-sm" onClick={() => openEditModal(u)}>
                                                 ویرایش
                                             </button>
-                                            <button
-                                                className={`btn btn-sm ${u.isActive ? 'btn-outline-danger' : 'btn-outline-success'}`}
-                                                onClick={() => toggleActive(u.id)}
-                                            >
-                                                {u.isActive ? 'غیرفعال' : 'فعال'}
+                                            <button className="btn btn-outline-primary btn-sm" onClick={() => openRolesModal(u)}>
+                                                نقش‌ها
                                             </button>
+                                            <button className="btn btn-outline-danger btn-sm" onClick={() => resetPass(u.id)}>
+                                                ریست رمز
+                                            </button>                                
+                                            
                                         </div>
                                     </td>
                                 </tr>
@@ -151,6 +166,13 @@ export default function UserList() {
                     mode={modalMode}
                     user={selectedUser}
                     onClose={() => setShowModal(false)}
+                    onSuccess={fetchUsers}
+                />
+            )}
+            {showRolesModal && (
+                <UserRolesModal
+                    user={selectedUser}
+                    onClose={() => setShowRolesModal(false)}
                     onSuccess={fetchUsers}
                 />
             )}
