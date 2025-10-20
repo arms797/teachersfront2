@@ -24,7 +24,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                 <small className="text-muted">مدیریت سامانه</small>
             </div>
 
-            <div className="p-2">
+            <div className="p-1">
                 {/* گروه کاربران */}
                 {hasRole('admin') && (
                     <div className="mb-2">
@@ -35,18 +35,13 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                         {openGroups.users && (
                             <ul className="list-group list-group-flush">
                                 <li className="list-group-item">
-                                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('users')}>
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('users')}>
                                         کاربران
                                     </button>
                                 </li>
                                 <li className="list-group-item">
-                                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('roles')}>
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('roles')}>
                                         نقش‌ها
-                                    </button>
-                                </li>
-                                <li className="list-group-item">
-                                    <button className="btn btn-link text-decoration-none p-0" onClick={() => onSelectPage('reset')}>
-                                        بازیابی رمز عبور
                                     </button>
                                 </li>
                             </ul>

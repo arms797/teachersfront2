@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import Sidebar from '../components/Sidebar.jsx'
 import RoleList from '../components/dashboard/Roles/RoleList.jsx'
-import ResetPassword from '../components/dashboard/ResetPassword.jsx'
 import ChangePassword from '../components/dashboard/ChangePassword.jsx'
 import UpdateContact from '../components/dashboard/UpdateContact.jsx'
 import UserList from '../components/dashboard/UserList.jsx'
@@ -46,8 +45,8 @@ export default function DashboardContent({ onLogout }) {
                 return hasRole('admin') ? <UserList /> : <AccessDenied />
             case 'roles':
                 return hasRole('admin') ? <RoleList /> : <AccessDenied />
-            case 'reset':
-                return hasRole('admin') ? <ResetPassword /> : <AccessDenied />
+            //case 'reset':
+            //    return hasRole('admin') ? <ResetPassword /> : <AccessDenied />
             case 'changePassword':
                 return <ChangePassword />
             case 'updateContact':
@@ -77,9 +76,9 @@ export default function DashboardContent({ onLogout }) {
             )}
 
             <main className={`flex-grow-1 ${sidebarVisible ? 'with-sidebar' : 'full-width'}`}>
-                <div className="container-fluid p-3">
+                <div className="container-fluid p-2">
                     {/* هدر داخلی با دکمه همبرگری */}
-                    <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div className="d-flex align-items-center justify-content-between mb-2">
                         <button
                             className="btn btn-outline-secondary"
                             onClick={toggleSidebar}
