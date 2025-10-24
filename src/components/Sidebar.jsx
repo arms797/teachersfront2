@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useUser } from '../context/UserContext.jsx'
 
 export default function Sidebar({ onSelectPage, onLogout }) {
-    const [openGroups, setOpenGroups] = useState({ users: true })
+    const [openGroups, setOpenGroups] = useState({ users: true, teachers: true })
     const { hasRole, loading } = useUser()
 
     function toggleGroup(key) {
@@ -48,6 +48,30 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                         )}
                     </div>
                 )}
+                {/* گروه اساتید */}
+                {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')) && (
+                    <div className="mb-2">
+                        <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('teachers')}>
+                            <span className="ms-2">اساتید</span>
+                            <span className="float-end">{openGroups.teachers ? '▾' : '▸'}</span>
+                        </button>
+                        {openGroups.teachers && (
+                            <ul className="list-group list-group-flush">
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('teachers')}>
+                                        اساتید
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('weeklySchedule')}>
+                                        برنامه هفتگی
+                                    </button>
+                                </li>
+                            </ul>
+                        )}
+                    </div>
+                )}
+
                 <hr />
 
                 {/* عملیات کاربر حاضر */}

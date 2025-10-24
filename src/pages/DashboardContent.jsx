@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
+import api from '../utils/apiClient.js'
+import { useNavigate } from 'react-router-dom'
+import { useUser } from '../context/UserContext.jsx'
 import Sidebar from '../components/Sidebar.jsx'
 import RoleList from '../components/dashboard/Roles/RoleList.jsx'
 import ChangePassword from '../components/dashboard/ChangePassword.jsx'
 import UpdateContact from '../components/dashboard/UpdateContact.jsx'
 import UserList from '../components/dashboard/UserList.jsx'
-import api from '../utils/apiClient.js'
-import { useNavigate } from 'react-router-dom'
-import { useUser } from '../context/UserContext.jsx'
+import TeacherList from '../components/dashboard/Teachers/TeacherList.jsx'
+//import WeeklyScheduleList from '../components/dashboard/Teachers/WeeklyScheduleList.jsx'
+
 
 export default function DashboardContent({ onLogout }) {
     const navigate = useNavigate()
@@ -45,8 +48,14 @@ export default function DashboardContent({ onLogout }) {
                 return hasRole('admin') ? <UserList /> : <AccessDenied />
             case 'roles':
                 return hasRole('admin') ? <RoleList /> : <AccessDenied />
-            //case 'reset':
-            //    return hasRole('admin') ? <ResetPassword /> : <AccessDenied />
+            case 'teachers':
+                return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
+                    ? <TeacherList />  : <AccessDenied />
+            case 'weeklySchedule':
+                return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
+                    ? <WeeklyScheduleList /> : <AccessDenied />
+
+
             case 'changePassword':
                 return <ChangePassword />
             case 'updateContact':
