@@ -6,21 +6,34 @@ export default function AddTeacherForm({ onSuccess }) {
         code: '',
         fname: '',
         lname: '',
+        email: '',
         mobile: '',
         fieldOfStudy: '',
         center: '',
         cooperationType: '',
-        degree: '',
-        academicRank: ''
+        academicRank: '',
+        executivePosition: ''
     })
 
     function handleChange(e) {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+        const { name, value } = e.target
+        setForm(prev => ({
+            ...prev,
+            [name]: value,
+            // اگر نوع همکاری تغییر کرد، مرتبه علمی را ریست کن
+            ...(name === 'cooperationType' ? { academicRank: '' } : {})
+        }))
     }
 
     async function handleSubmit(e) {
         e.preventDefault()
         try {
+            if (!form.code || !form.fname || !form.lname || !form.cooperationType || !form.academicRank) {
+                alert('لطفاً تمام فیلدهای ضروری را تکمیل کنید')
+                return
+            }
+            console.log('📦 داده ارسالی به سرور:', JSON.stringify(form, null, 2))
+
             await api.post('/api/teachers', form)
             onSuccess()
         } catch (err) {
@@ -28,6 +41,14 @@ export default function AddTeacherForm({ onSuccess }) {
             console.error(err)
         }
     }
+
+    // گزینه‌های پویا برای مرتبه علمی
+    const academicRankOptions =
+        form.cooperationType === 'عضو هیات علمی'
+            ? ['استادیار', 'دانشیار', 'استاد', 'مربی', 'دستیار علمی']
+            : form.cooperationType === 'مدرس مدعو'
+                ? ['دکتری', 'کارشناسی ارشد']
+                : []
 
     return (
         <form onSubmit={handleSubmit}>
@@ -40,6 +61,16 @@ export default function AddTeacherForm({ onSuccess }) {
                 </div>
                 <div className="col-md-4">
                     <input name="lname" className="form-control" placeholder="نام خانوادگی" value={form.lname} onChange={handleChange} />
+                </div>
+                <div className="col-md-4">
+                    <input
+                        name="email"
+                        type="email"
+                        className="form-control"
+                        placeholder="ایمیل"
+                        value={form.email}
+                        onChange={handleChange}
+                    />
                 </div>
                 <div className="col-md-4">
                     <input name="mobile" className="form-control" placeholder="شماره موبایل" value={form.mobile} onChange={handleChange} />
@@ -58,12 +89,24 @@ export default function AddTeacherForm({ onSuccess }) {
                     </select>
                 </div>
                 <div className="col-md-4">
-                    <input name="academicRank" className="form-control" placeholder="مرتبه علمی" value={form.academicRank} onChange={handleChange} />
+                    <select
+                        name="academicRank"
+                        className="form-select"
+                        value={form.academicRank}
+                        onChange={handleChange}
+                        disabled={!form.cooperationType}
+                    >
+                        <option value=""> مرتبه علمی/مدرک تحصیلی</option>
+                        {academicRankOptions.map((rank, i) => (
+                            <option key={i} value={rank}>{rank}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="col-md-4">
-                    <input name="degree" className="form-control" placeholder="مدرک تحصیلی" value={form.degree} onChange={handleChange} />
+                    <input name="executivePosition" className="form-control" placeholder="سمت اجرایی (اختیاری)" value={form.executivePosition} onChange={handleChange} />
                 </div>
             </div>
+
             <div className="mt-3 text-end">
                 <button type="submit" className="btn btn-success">✅ ثبت استاد</button>
             </div>

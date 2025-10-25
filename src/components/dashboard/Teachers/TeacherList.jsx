@@ -45,6 +45,7 @@ export default function TeacherList() {
 
     function handleDelete(id) {
         if (!window.confirm('آیا از حذف مطمئن هستید؟')) return
+        if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
         api.delete(`/api/teachers/${id}`).then(() => fetchTeachers())
     }
 
@@ -147,14 +148,15 @@ export default function TeacherList() {
                                     <td>{t.cooperationType}</td>
                                     <td>{t.mobile}</td>
                                     <td className="text-muted">
-                                        {t.cooperationType === 'عضو هیات علمی'
-                                            ? <span className="text-primary">{t.academicRank}</span>
-                                            : <span className="text-success">{t.degree}</span>}
+                                        <span className={t.cooperationType === 'عضو هیات علمی' ? 'text-primary' : 'text-success'}>
+                                            {t.academicRank}
+                                        </span>
                                     </td>
+
                                     <td>
                                         <div className="d-flex gap-1">
                                             <button className="btn btn-sm btn-outline-success" onClick={() => handleWeeklySchedule(t.code)}>
-                                                📅 برنامه هفتگی
+                                                📅 برنامه حضور هفتگی
                                             </button>
                                             <button className="btn btn-sm btn-outline-primary">✏️ ویرایش</button>
                                             {hasRole('admin') && (

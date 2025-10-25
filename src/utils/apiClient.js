@@ -30,7 +30,7 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response) {
-      const msg = error.response.data?.message || 'خطا در پاسخ سرور'
+      const msg = error.response.data || 'خطا در پاسخ سرور'
       return Promise.reject(new Error(msg))
     } else if (error.request) {
       return Promise.reject(new Error('پاسخی از سرور دریافت نشد'))
