@@ -1,22 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import api from '../../../utils/apiClient.js'
 import { useCenters } from '../../../context/CenterContext.jsx'
 
-export default function AddTeacherForm({ onSuccess }) {
-    const [form, setForm] = useState({
-        code: '',
-        fname: '',
-        lname: '',
-        email: '',
-        mobile: '',
-        fieldOfStudy: '',
-        center: '',
-        cooperationType: '',
-        academicRank: '',
-        executivePosition: '',
-        nationalCode: '' // ✅ فیلد جدید
-    })
+export default function EditTeacherForm({ teacher, onSuccess }) {
+    const [form, setForm] = useState({ ...teacher })
     const { centers } = useCenters()
+
+    useEffect(() => {
+        setForm({ ...teacher })
+    }, [teacher])
 
     function handleChange(e) {
         const { name, value } = e.target
@@ -35,11 +27,10 @@ export default function AddTeacherForm({ onSuccess }) {
                 return
             }
 
-            console.log('📦 داده ارسالی به سرور:', JSON.stringify(form, null, 2))
-            await api.post('/api/teachers', form)
+            await api.put(`/api/teachers/${form.id}`, form)
             onSuccess()
         } catch (err) {
-            alert('خطا در ثبت استاد')
+            alert('خطا در ویرایش استاد')
             console.error(err)
         }
     }
@@ -53,29 +44,37 @@ export default function AddTeacherForm({ onSuccess }) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="row g-2">
+            <div className="row g-3">
                 <div className="col-md-4">
-                    <input name="code" className="form-control" placeholder="کد استادی" value={form.code} onChange={handleChange} />
+                    <label className="form-label">کد استادی</label>
+                    <input name="code" className="form-control" value={form.code} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="fname" className="form-control" placeholder="نام" value={form.fname} onChange={handleChange} />
+                    <label className="form-label">نام</label>
+                    <input name="fname" className="form-control" value={form.fname} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="lname" className="form-control" placeholder="نام خانوادگی" value={form.lname} onChange={handleChange} />
+                    <label className="form-label">نام خانوادگی</label>
+                    <input name="lname" className="form-control" value={form.lname} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="nationalCode" className="form-control" placeholder="کد ملی" value={form.nationalCode} onChange={handleChange} />
+                    <label className="form-label">کد ملی</label>
+                    <input name="nationalCode" className="form-control" value={form.nationalCode} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="email" type="email" className="form-control" placeholder="ایمیل" value={form.email} onChange={handleChange} />
+                    <label className="form-label">ایمیل</label>
+                    <input name="email" type="email" className="form-control" value={form.email} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="mobile" className="form-control" placeholder="شماره موبایل" value={form.mobile} onChange={handleChange} />
+                    <label className="form-label">شماره موبایل</label>
+                    <input name="mobile" className="form-control" value={form.mobile} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
-                    <input name="fieldOfStudy" className="form-control" placeholder="رشته" value={form.fieldOfStudy} onChange={handleChange} />
+                    <label className="form-label">رشته</label>
+                    <input name="fieldOfStudy" className="form-control" value={form.fieldOfStudy} onChange={handleChange} />
                 </div>
                 <div className="col-md-4">
+                    <label className="form-label">مرکز</label>
                     <select
                         name="center"
                         className="form-select"
@@ -90,15 +89,16 @@ export default function AddTeacherForm({ onSuccess }) {
                         ))}
                     </select>
                 </div>
-
                 <div className="col-md-4">
+                    <label className="form-label">نوع همکاری</label>
                     <select name="cooperationType" className="form-select" value={form.cooperationType} onChange={handleChange}>
-                        <option value="">نوع همکاری</option>
+                        <option value="">انتخاب نوع همکاری</option>
                         <option value="عضو هیات علمی">عضو هیات علمی</option>
                         <option value="مدرس مدعو">مدرس مدعو</option>
                     </select>
                 </div>
                 <div className="col-md-4">
+                    <label className="form-label">مرتبه علمی / مدرک تحصیلی</label>
                     <select
                         name="academicRank"
                         className="form-select"
@@ -106,20 +106,20 @@ export default function AddTeacherForm({ onSuccess }) {
                         onChange={handleChange}
                         disabled={!form.cooperationType}
                     >
-                        <option value="">مرتبه علمی / مدرک تحصیلی</option>
+                        <option value="">انتخاب مرتبه / مدرک</option>
                         {academicRankOptions.map((rank, i) => (
                             <option key={i} value={rank}>{rank}</option>
                         ))}
                     </select>
                 </div>
                 <div className="col-md-4">
-                    <input name="executivePosition" className="form-control" placeholder="سمت اجرایی (اختیاری)" value={form.executivePosition} onChange={handleChange} />
+                    <label className="form-label">سمت اجرایی (اختیاری)</label>
+                    <input name="executivePosition" className="form-control" value={form.executivePosition} onChange={handleChange} />
                 </div>
-
             </div>
 
-            <div className="mt-3 text-end">
-                <button type="submit" className="btn btn-success">✅ ثبت استاد</button>
+            <div className="mt-4 text-end">
+                <button type="submit" className="btn btn-primary">✏️ ویرایش استاد</button>
             </div>
         </form>
     )

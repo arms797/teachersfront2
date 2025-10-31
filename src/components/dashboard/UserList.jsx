@@ -11,7 +11,6 @@ export default function UserList() {
     const [modalMode, setModalMode] = useState('add')
     const [selectedUser, setSelectedUser] = useState(null)
     const [showRolesModal, setShowRolesModal] = useState(false)
-    //const [selectedUser, setSelectedUser] = useState(null)
 
     function openAddModal() {
         setModalMode('add')
@@ -28,8 +27,23 @@ export default function UserList() {
         setSelectedUser(user)
         setShowRolesModal(true)
     }
+    // ثبت وضعیت در تاریخچه مرورگر
     useEffect(() => {
+        window.history.pushState({ section: 'users' }, '', '#users')
+
+        const handlePopState = (e) => {
+            const section = e.state?.section
+            if (section !== 'users') {
+                window.location.href = '/dashboard'
+            }
+        }
+
+        window.addEventListener('popstate', handlePopState)
         fetchUsers()
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState)
+        }
     }, [])
 
     async function fetchUsers() {
@@ -45,40 +59,6 @@ export default function UserList() {
         }
     }
 
-    /* async function toggleActive(userId) {
-         try {
-             await api.post(`/api/users/${userId}/toggle-active`)
-             fetchUsers()
-         } catch (err) {
-             setMessage('خطا در تغییر وضعیت کاربر')
-         }
-     }*/
-
-    /* function handleAddUser() {
-         const username = prompt('نام کاربری:')
-         const fullName = prompt('نام کامل:')
-         const password = prompt('رمز عبور:')
-         if (!username || !fullName || !password) return
- 
-         api.post('/api/users', { username, fullName, password })
-             .then(() => {
-                 setMessage('کاربر جدید افزوده شد')
-                 fetchUsers()
-             })
-             .catch(err => setMessage(err.message))
-     }*/
-
-    /*function handleEdit(user) {
-        const fullName = prompt('نام جدید:', user.fullName)
-        if (!fullName) return
-
-        api.put(`/api/users/${user.id}`, { ...user, fullName })
-            .then(() => {
-                setMessage('ویرایش انجام شد')
-                fetchUsers()
-            })
-            .catch(err => setMessage(err.message))
-    }*/
     async function resetPass(id) {
         try {
             await api.post(`/api/users/${id}/reset-password`)
@@ -146,8 +126,8 @@ export default function UserList() {
                                             </button>
                                             <button className="btn btn-outline-danger btn-sm" onClick={() => resetPass(u.id)}>
                                                 ریست رمز
-                                            </button>                                
-                                            
+                                            </button>
+
                                         </div>
                                     </td>
                                 </tr>

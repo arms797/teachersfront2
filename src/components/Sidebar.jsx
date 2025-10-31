@@ -63,8 +63,8 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                                     </button>
                                 </li>
                                 <li className="list-group-item">
-                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('weeklySchedule')}>
-                                        برنامه هفتگی
+                                    <button className="btn btn-outline-secondary w-100 mb-1">
+                                        گزارشات
                                     </button>
                                 </li>
                             </ul>

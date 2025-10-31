@@ -74,7 +74,7 @@ export default function UserRolesModal({ user, onClose, onSuccess }) {
                                         return (
                                             <tr key={role.id}>
                                                 <td>{index + 1}</td>
-                                                <td>{role.title}</td>
+                                                <td>{role.description}</td>
                                                 <td>
                                                     {hasRole ? (
                                                         <button className="btn btn-danger btn-sm" onClick={() => removeRole(role.id)}>

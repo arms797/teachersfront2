@@ -3,6 +3,8 @@ import api from '../../../utils/apiClient.js'
 import { useUser } from '../../../context/UserContext.jsx'
 import UploadTeacherExcel from './UploadTeacherExcel.jsx'
 import AddTeacherForm from './AddTeacherForm.jsx'
+import EditTeacherForm from './EditTeacherForm.jsx'
+
 
 
 export default function TeacherList() {
@@ -16,6 +18,8 @@ export default function TeacherList() {
     const [pageSize] = useState(30)
     const [totalPages, setTotalPages] = useState(1)
     const [showModal, setShowModal] = useState(false)
+    const [editModal, setEditModal] = useState(false)
+    const [selectedTeacher, setSelectedTeacher] = useState(null)
 
 
 
@@ -158,7 +162,16 @@ export default function TeacherList() {
                                             <button className="btn btn-sm btn-outline-success" onClick={() => handleWeeklySchedule(t.code)}>
                                                 📅 برنامه حضور هفتگی
                                             </button>
-                                            <button className="btn btn-sm btn-outline-primary">✏️ ویرایش</button>
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => {
+                                                    setSelectedTeacher(t)
+                                                    setEditModal(true)
+                                                }}
+                                            >
+                                                ✏️ ویرایش
+                                            </button>
+
                                             {hasRole('admin') && (
                                                 <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(t.id)}>
                                                     🗑️ حذف
@@ -204,6 +217,28 @@ export default function TeacherList() {
                     </div>
                 </div>
             )}
+            {editModal && selectedTeacher && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">ویرایش استاد</h5>
+                                <button type="button" className="btn-close" onClick={() => setEditModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <EditTeacherForm
+                                    teacher={selectedTeacher}
+                                    onSuccess={() => {
+                                        setEditModal(false)
+                                        fetchTeachers()
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
         </div>
     )
