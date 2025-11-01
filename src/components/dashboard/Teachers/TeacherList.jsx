@@ -4,7 +4,7 @@ import { useUser } from '../../../context/UserContext.jsx'
 import UploadTeacherExcel from './UploadTeacherExcel.jsx'
 import AddTeacherForm from './AddTeacherForm.jsx'
 import EditTeacherForm from './EditTeacherForm.jsx'
-
+import { useCenters } from '../../../context/CenterContext.jsx'
 
 
 export default function TeacherList() {
@@ -20,7 +20,7 @@ export default function TeacherList() {
     const [showModal, setShowModal] = useState(false)
     const [editModal, setEditModal] = useState(false)
     const [selectedTeacher, setSelectedTeacher] = useState(null)
-
+    const { centers } = useCenters()
 
 
 
@@ -51,6 +51,11 @@ export default function TeacherList() {
         if (!window.confirm('آیا از حذف مطمئن هستید؟')) return
         if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
         api.delete(`/api/teachers/${id}`).then(() => fetchTeachers())
+    }
+    function handleResetPass(id) {
+        if (!window.confirm('آیا از بازیابی رمز عبور مطمئن هستید؟')) return
+        //if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
+        api.post(`/api/teachers/${id}/reset-password`).then(() => fetchTeachers())
     }
 
     function handleWeeklySchedule(code) {
@@ -148,7 +153,11 @@ export default function TeacherList() {
                                     <td>{t.code}</td>
                                     <td>{t.fname} {t.lname}</td>
                                     <td>{t.fieldOfStudy}</td>
-                                    <td>{t.center}</td>
+                                    <td>
+                                        {
+                                            centers.find(c => c.centerCode === t.center)?.title || t.center
+                                        }
+                                    </td>
                                     <td>{t.cooperationType}</td>
                                     <td>{t.mobile}</td>
                                     <td className="text-muted">
@@ -175,6 +184,11 @@ export default function TeacherList() {
                                             {hasRole('admin') && (
                                                 <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(t.id)}>
                                                     🗑️ حذف
+                                                </button>
+                                            )}
+                                            {hasRole('admin') && (
+                                                <button className="btn btn-sm btn-outline-info" onClick={() => handleResetPass(t.id)}>
+                                                     بازیابی رمز عبور
                                                 </button>
                                             )}
                                         </div>

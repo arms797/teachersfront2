@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import api from '../../utils/apiClient.js'
 import UserModal from './UserModal.jsx'
 import UserRolesModal from './UserRolesModal.jsx'
+import { useCenters } from '../../context/CenterContext.jsx'
+
 
 export default function UserList() {
     const [users, setUsers] = useState([])
@@ -11,6 +13,8 @@ export default function UserList() {
     const [modalMode, setModalMode] = useState('add')
     const [selectedUser, setSelectedUser] = useState(null)
     const [showRolesModal, setShowRolesModal] = useState(false)
+    const { centers } = useCenters()
+
 
     function openAddModal() {
         setModalMode('add')
@@ -110,7 +114,11 @@ export default function UserList() {
                                     <td>{u.nationalCode}</td>
                                     <td>{u.email}</td>
                                     <td>{u.mobile}</td>
-                                    <td>{u.centerCode}</td>
+                                    <td>
+                                        {
+                                            centers.find(c => c.centerCode === u.centerCode)?.title || u.centerCode
+                                        }
+                                    </td>
                                     <td>
                                         <span className={`badge bg-${u.isActive ? 'success' : 'secondary'}`}>
                                             {u.isActive ? 'فعال' : 'غیرفعال'}

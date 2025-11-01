@@ -84,7 +84,7 @@ export default function AddTeacherForm({ onSuccess }) {
                     >
                         <option value="">انتخاب مرکز</option>
                         {centers.map(c => (
-                            <option key={c.centerCode} value={c.title}>
+                            <option key={c.centerCode} value={c.centerCode}>
                                 {c.title}
                             </option>
                         ))}

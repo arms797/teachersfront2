@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import api from '../../utils/apiClient.js'
+import { useCenters } from '../../context/CenterContext.jsx'
 
 export default function UserModal({ mode, user, onClose, onSuccess }) {
     const isEdit = mode === 'edit'
@@ -16,6 +17,7 @@ export default function UserModal({ mode, user, onClose, onSuccess }) {
     })
 
     const [message, setMessage] = useState(null)
+    const { centers } = useCenters()
 
     useEffect(() => {
         if (isEdit && user) {
@@ -95,8 +97,20 @@ export default function UserModal({ mode, user, onClose, onSuccess }) {
                                 <input type="email" name="email" className="form-control" value={form.email} onChange={handleChange} />
                             </div>
                             <div className="col-md-6">
-                                <label className="form-label">کد مرکز</label>
-                                <input type="text" name="centerCode" className="form-control" value={form.centerCode} onChange={handleChange} />
+                                <label className="form-label">مرکز</label>
+                                <select
+                                    name="centerCode"
+                                    className="form-select"
+                                    value={form.centerCode}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">انتخاب مرکز</option>
+                                    {centers.map(c => (
+                                        <option key={c.centerCode} value={c.centerCode}>
+                                            {c.title}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="col-md-6">
                                 <label className="form-label">نام کاربری</label>

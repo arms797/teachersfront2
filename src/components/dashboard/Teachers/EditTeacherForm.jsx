@@ -23,7 +23,7 @@ export default function EditTeacherForm({ teacher, onSuccess }) {
         e.preventDefault()
         try {
             if (!form.code || !form.fname || !form.lname || !form.cooperationType || !form.academicRank) {
-                alert('لطفاً تمام فیلدهای ضروری را تکمیل کنید')
+                alert('لطفاً فیلدهای کد استاد، نام ، نام خانوادگی،نوع همکاری و مرتبه علمی/مدرک تحصیلی را تکمیل کنید')
                 return
             }
 
@@ -83,7 +83,7 @@ export default function EditTeacherForm({ teacher, onSuccess }) {
                     >
                         <option value="">انتخاب مرکز</option>
                         {centers.map(c => (
-                            <option key={c.centerCode} value={c.title}>
+                            <option key={c.centerCode} value={c.centerCode}>
                                 {c.title}
                             </option>
                         ))}

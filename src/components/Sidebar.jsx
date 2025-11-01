@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useUser } from '../context/UserContext.jsx'
 
 export default function Sidebar({ onSelectPage, onLogout }) {
-    const [openGroups, setOpenGroups] = useState({ users: true, teachers: true })
+    const [openGroups, setOpenGroups] = useState({ users: false, teachers: true })
     const { hasRole, loading } = useUser()
 
     function toggleGroup(key) {
@@ -25,29 +25,6 @@ export default function Sidebar({ onSelectPage, onLogout }) {
             </div>
 
             <div className="p-1">
-                {/* گروه کاربران */}
-                {hasRole('admin') && (
-                    <div className="mb-2">
-                        <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('users')}>
-                            <span className="ms-2">کاربران</span>
-                            <span className="float-end">{openGroups.users ? '▾' : '▸'}</span>
-                        </button>
-                        {openGroups.users && (
-                            <ul className="list-group list-group-flush">
-                                <li className="list-group-item">
-                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('users')}>
-                                        کاربران
-                                    </button>
-                                </li>
-                                <li className="list-group-item">
-                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('roles')}>
-                                        نقش‌ها
-                                    </button>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
-                )}
                 {/* گروه اساتید */}
                 {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')) && (
                     <div className="mb-2">
@@ -65,6 +42,30 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                                 <li className="list-group-item">
                                     <button className="btn btn-outline-secondary w-100 mb-1">
                                         گزارشات
+                                    </button>
+                                </li>
+                            </ul>
+                        )}
+                    </div>
+                )}
+
+                {/* گروه کاربران */}
+                {hasRole('admin') && (
+                    <div className="mb-2">
+                        <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('users')}>
+                            <span className="ms-2">عملیات سیستمی</span>
+                            <span className="float-end">{openGroups.users ? '▾' : '▸'}</span>
+                        </button>
+                        {openGroups.users && (
+                            <ul className="list-group list-group-flush">
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('users')}>
+                                        کاربران
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('roles')}>
+                                        نقش‌ها
                                     </button>
                                 </li>
                             </ul>
