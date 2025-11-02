@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import api from '../../../utils/apiClient.js'
 import { useUser } from '../../../context/UserContext.jsx'
 
-export default function UploadTeacherExcel({ onSuccess }) {
+export default function UploadSchedulExcel({ onSuccess }) {
     const { hasRole } = useUser()
     const [showModal, setShowModal] = useState(false)
     const [file, setFile] = useState(null)
@@ -40,7 +40,7 @@ export default function UploadTeacherExcel({ onSuccess }) {
         <>
             {/* دکمه باز کردن مودال */}
             <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowModal(true)}>
-                📄 افزودن با فایل اکسل
+                📄 افزودن برنامه هفتگی اساتید با فایل اکسل
             </button>
 
             {/* مودال */}
@@ -58,6 +58,10 @@ export default function UploadTeacherExcel({ onSuccess }) {
                                 }}></button>
                             </div>
                             <div className="modal-body">
+                                <h5 className='modal-title text-danger'>
+                                    در استفاده از این آیتم مطمئن باشید چون در صورت اشتباه اطلاعات برنامه زمانبندی اساتید ممکن است از بین برود
+                                </h5>
+                                <br />
                                 <input
                                     type="file"
                                     accept=".xlsx"
@@ -72,7 +76,6 @@ export default function UploadTeacherExcel({ onSuccess }) {
                                 >
                                     {loading ? 'در حال ارسال...' : 'افزودن برنامه'}
                                 </button>
-
                                 {error && <div className="alert alert-danger mt-3">{error}</div>}
 
                                 {result && (

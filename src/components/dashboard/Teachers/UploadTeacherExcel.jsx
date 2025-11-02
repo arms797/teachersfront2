@@ -40,7 +40,7 @@ export default function UploadTeacherExcel({ onSuccess }) {
         <>
             {/* دکمه باز کردن مودال */}
             <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowModal(true)}>
-                📄 افزودن با فایل اکسل
+                📄 افزودن اساتید با فایل اکسل
             </button>
 
             {/* مودال */}
@@ -49,7 +49,7 @@ export default function UploadTeacherExcel({ onSuccess }) {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">افزودن اساتید با فایل اکسل</h5>
+                                <h5 className="modal-title ">افزودن اساتید با فایل اکسل</h5>
                                 <button type="button" className="btn-close" onClick={() => {
                                     setShowModal(false)
                                     setFile(null)
@@ -58,6 +58,10 @@ export default function UploadTeacherExcel({ onSuccess }) {
                                 }}></button>
                             </div>
                             <div className="modal-body">
+                                <h5 className='modal-title text-danger'>
+                                    در استفاده از این آیتم مطمئن باشید چون در صورت اشتباه اطلاعات ترمی اساتید ممکن است از بین برود
+                                </h5>
+                                <br/>
                                 <input
                                     type="file"
                                     accept=".xlsx"

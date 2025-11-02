@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import api from '../../../utils/apiClient.js'
 import { useUser } from '../../../context/UserContext.jsx'
 import UploadTeacherExcel from './UploadTeacherExcel.jsx'
-import UploadTeacherExcel from './UploadSchedulExcel.jsx'
+import UploadSchedulExcel from './UploadSchedulExcel.jsx'
 import AddTeacherForm from './AddTeacherForm.jsx'
 import EditTeacherForm from './EditTeacherForm.jsx'
 import { useCenters } from '../../../context/CenterContext.jsx'
@@ -67,16 +67,19 @@ export default function TeacherList() {
         <div className="card">
             <div className="card-body">
                 {/* هدر و دکمه‌ها */}
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="m-0">اساتید دانشگاه</h5>
-                    <div className="d-flex align-items-center">
-                        <button className="btn btn-primary me-2" onClick={() => setShowModal(true)}>
-                            ➕ افزودن استاد
-                        </button>
+                <div className='row'>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h4 className="m-0 col-3">اساتید دانشگاه</h4>
+                        <div className="d-flex align-items-center col-3">
+                            <button className="btn btn-primary me-2" onClick={() => setShowModal(true)}>
+                                ➕ افزودن استاد
+                            </button>
+                        </div>
+                        <UploadTeacherExcel onSuccess={fetchTeachers}  className="col-3"/>
+                        <UploadSchedulExcel className="col-3"/>
                     </div>
-                    <UploadTeacherExcel onSuccess={fetchTeachers} />
-                    
                 </div>
+
 
                 {/* فیلترها */}
                 <div className="row g-2 mb-3">
@@ -179,7 +182,7 @@ export default function TeacherList() {
                                             >
                                                 ✏️ ویرایش
                                             </button>
-                                            {hasRole('admin') && (
+                                            {(hasRole('admin') || hasRole('centerAdmin')) && (
                                                 <button className="btn btn-sm btn-outline-info" onClick={() => handleResetPass(t.id)}>
                                                     بازیابی رمز عبور
                                                 </button>
