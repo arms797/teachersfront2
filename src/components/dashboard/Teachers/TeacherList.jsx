@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import api from '../../../utils/apiClient.js'
 import { useUser } from '../../../context/UserContext.jsx'
 import UploadTeacherExcel from './UploadTeacherExcel.jsx'
+import UploadTeacherExcel from './UploadSchedulExcel.jsx'
 import AddTeacherForm from './AddTeacherForm.jsx'
 import EditTeacherForm from './EditTeacherForm.jsx'
 import { useCenters } from '../../../context/CenterContext.jsx'
@@ -74,6 +75,7 @@ export default function TeacherList() {
                         </button>
                     </div>
                     <UploadTeacherExcel onSuccess={fetchTeachers} />
+                    
                 </div>
 
                 {/* فیلترها */}
@@ -128,7 +130,6 @@ export default function TeacherList() {
                             }}
                         />
                     </div>
-
                 </div>
 
                 {/* جدول */}
@@ -146,7 +147,6 @@ export default function TeacherList() {
                                 <th>عملیات</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {teachers.map(t => (
                                 <tr key={t.id}>
@@ -165,7 +165,6 @@ export default function TeacherList() {
                                             {t.academicRank}
                                         </span>
                                     </td>
-
                                     <td>
                                         <div className="d-flex gap-1">
                                             <button className="btn btn-sm btn-outline-success" onClick={() => handleWeeklySchedule(t.code)}>
@@ -180,15 +179,14 @@ export default function TeacherList() {
                                             >
                                                 ✏️ ویرایش
                                             </button>
-
                                             {hasRole('admin') && (
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(t.id)}>
-                                                    🗑️ حذف
+                                                <button className="btn btn-sm btn-outline-info" onClick={() => handleResetPass(t.id)}>
+                                                    بازیابی رمز عبور
                                                 </button>
                                             )}
                                             {hasRole('admin') && (
-                                                <button className="btn btn-sm btn-outline-info" onClick={() => handleResetPass(t.id)}>
-                                                     بازیابی رمز عبور
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(t.id)}>
+                                                    🗑️ حذف
                                                 </button>
                                             )}
                                         </div>
@@ -213,6 +211,7 @@ export default function TeacherList() {
                     </ul>
                 </nav>
             </div>
+            {/*مودال های استاد جدید و ویرایش استاد */}
             {showModal && (
                 <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-lg">

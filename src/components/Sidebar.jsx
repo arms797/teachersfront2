@@ -49,7 +49,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                     </div>
                 )}
 
-                {/* گروه کاربران */}
+                {/* تنظیمات سیستمی*/}
                 {hasRole('admin') && (
                     <div className="mb-2">
                         <button className="btn btn-light w-100 text-start" onClick={() => toggleGroup('users')}>
