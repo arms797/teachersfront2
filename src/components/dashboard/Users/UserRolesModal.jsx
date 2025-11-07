@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import api from '../../utils/apiClient.js'
+import api from '../../../utils/apiClient'
 
 export default function UserRolesModal({ user, onClose, onSuccess }) {
     const [roles, setRoles] = useState([])

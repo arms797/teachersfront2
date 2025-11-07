@@ -6,10 +6,10 @@ import Sidebar from '../components/Sidebar.jsx'
 import RoleList from '../components/dashboard/Roles/RoleList.jsx'
 import ChangePassword from '../components/dashboard/ChangePassword.jsx'
 import UpdateContact from '../components/dashboard/UpdateContact.jsx'
-import UserList from '../components/dashboard/UserList.jsx'
+import UserList from '../components/dashboard/Users/UserList.jsx'
 import TeacherList from '../components/dashboard/Teachers/TeacherList.jsx'
-//import WeeklyScheduleList from '../components/dashboard/Teachers/WeeklyScheduleList.jsx'
-
+import TermCalendarList from '../components/dashboard/TermSetting/TermCalendarList.jsx'
+import SartermCreator from '../components/dashboard/TermSetting/SartermCreator.jsx'
 
 export default function DashboardContent({ onLogout }) {
     const navigate = useNavigate()
@@ -50,12 +50,16 @@ export default function DashboardContent({ onLogout }) {
                 return hasRole('admin') ? <RoleList /> : <AccessDenied />
             case 'teachers':
                 return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
-                    ? <TeacherList />  : <AccessDenied />
+                    ? <TeacherList /> : <AccessDenied />
             case 'weeklySchedule':
                 return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
                     ? <WeeklyScheduleList /> : <AccessDenied />
-
-
+            case 'termCalender':
+                return hasRole('admin') ? <TermCalendarList /> : <AccessDenied />
+            case 'sarTerm':
+                return hasRole('admin') ? <SartermCreator /> : <AccessDenied />
+            case 'weeklyTT':
+                return hasRole('teacher')
             case 'changePassword':
                 return <ChangePassword />
             case 'updateContact':
@@ -73,7 +77,6 @@ export default function DashboardContent({ onLogout }) {
                 )
         }
     }
-
     function toggleSidebar() {
         setSidebarVisible(prev => !prev)
     }
@@ -83,7 +86,6 @@ export default function DashboardContent({ onLogout }) {
             {sidebarVisible && (
                 <Sidebar onSelectPage={setActivePage} onLogout={handleLogout} />
             )}
-
             <main className={`flex-grow-1 ${sidebarVisible ? 'with-sidebar' : 'full-width'}`}>
                 <div className="container-fluid p-2">
                     {/* هدر داخلی با دکمه همبرگری */}
@@ -95,9 +97,12 @@ export default function DashboardContent({ onLogout }) {
                         >
                             ☰
                         </button>
-                        <h5 className="m-0">داشبورد</h5>
+                        <h5 className="m-0"> زمانبندی برنامه هفتگی اساتید</h5>
+                        <button className='btn btn-secondary'
+                            onClick={() => setActivePage('welcome')}
+                        >
+                            بازگشت به صفحه اصلی</button>
                     </div>
-
                     {message && <div className="alert alert-info">{message}</div>}
                     {renderContent()}
                 </div>

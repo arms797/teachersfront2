@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import api from '../../utils/apiClient.js'
-import UserModal from './UserModal.jsx'
-import UserRolesModal from './UserRolesModal.jsx'
-import { useCenters } from '../../context/CenterContext.jsx'
+import api from '../../../utils/apiClient.js'
+import UserModal from '../Users/UserModal.jsx'
+import UserRolesModal from '../Users/UserRolesModal.jsx'
+import { useCenters } from '../../../context/CenterContext.jsx'
 
 
 export default function UserList() {

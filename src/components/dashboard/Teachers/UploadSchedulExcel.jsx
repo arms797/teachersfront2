@@ -24,7 +24,7 @@ export default function UploadSchedulExcel({ onSuccess }) {
         try {
             setLoading(true)
             setError(null)
-            const res = await api.post('/api/weeklySchedule/upload-excel', formData, {
+            const res = await api.post('/api/WeeklySchedule/upload-excel', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
             setResult(res) // انتظار داریم res شامل counts باشه

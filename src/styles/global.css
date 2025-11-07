@@ -39,3 +39,14 @@ body {
 .text-end { text-align: left !important; }
 .ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
 .me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
+
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: #fff;
+    z-index: 9999;
+    overflow-y: auto;
+}

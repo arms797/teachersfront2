@@ -25,6 +25,13 @@ export default function Sidebar({ onSelectPage, onLogout }) {
             </div>
 
             <div className="p-1">
+                {/*فقط توسط استادی که لاگین کرده نمایش داده میشود */}
+                {(hasRole('teacher')) && (
+                    <button className="btn btn-outline-secondary w-100 mb-2" onClick={() => onSelectPage('weeklyTT')}>
+                        برنامه زمانبندی هفتگی
+                    </button>
+                )}
+
                 {/* گروه اساتید */}
                 {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')) && (
                     <div className="mb-2">
@@ -59,6 +66,16 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                         {openGroups.users && (
                             <ul className="list-group list-group-flush">
                                 <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('termCalender')}>
+                                        تقویم ترمی
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
+                                    <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('sarTerm')}>
+                                        سرترم
+                                    </button>
+                                </li>
+                                <li className="list-group-item">
                                     <button className="btn btn-outline-secondary w-100 mb-1" onClick={() => onSelectPage('users')}>
                                         کاربران
                                     </button>
@@ -68,6 +85,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                                         نقش‌ها
                                     </button>
                                 </li>
+
                             </ul>
                         )}
                     </div>

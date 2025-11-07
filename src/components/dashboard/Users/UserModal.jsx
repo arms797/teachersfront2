@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import api from '../../utils/apiClient.js'
-import { useCenters } from '../../context/CenterContext.jsx'
+import api from '../../../utils/apiClient.js'
+import { useCenters } from '../../../context/CenterContext.jsx'
 
 export default function UserModal({ mode, user, onClose, onSuccess }) {
     const isEdit = mode === 'edit'

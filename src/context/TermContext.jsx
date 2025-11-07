@@ -47,3 +47,6 @@ export function TermProvider({ children }) {
         </TermContext.Provider>
     )
 }
+export function useTerms() {
+    return useContext(TermContext)
+}

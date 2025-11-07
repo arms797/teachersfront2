@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import api from '../../utils/apiClient.js'
+import api from '../../../utils/apiClient.js'
 
 export default function UserForm({ mode, user, onBack, onSuccess }) {
     const [form, setForm] = useState({

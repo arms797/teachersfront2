@@ -6,6 +6,8 @@ import UploadSchedulExcel from './UploadSchedulExcel.jsx'
 import AddTeacherForm from './AddTeacherForm.jsx'
 import EditTeacherForm from './EditTeacherForm.jsx'
 import { useCenters } from '../../../context/CenterContext.jsx'
+import { useTerms } from '../../../context/TermContext.jsx'
+import TeacherSchedule from './TeacherSchedule.jsx'
 
 
 export default function TeacherList() {
@@ -22,7 +24,8 @@ export default function TeacherList() {
     const [editModal, setEditModal] = useState(false)
     const [selectedTeacher, setSelectedTeacher] = useState(null)
     const { centers } = useCenters()
-
+    const { activeTerm } = useTerms()
+    const [scheduleCode, setScheduleCode] = useState(null)
 
 
     useEffect(() => {
@@ -59,9 +62,9 @@ export default function TeacherList() {
         api.post(`/api/teachers/${id}/reset-password`).then(() => fetchTeachers())
     }
 
-    function handleWeeklySchedule(code) {
-        alert(`نمایش برنامه هفتگی برای استاد با کد: ${code}`)
-    }
+    //function handleWeeklySchedule(code) {
+    //    alert(`نمایش برنامه هفتگی برای استاد با کد: ${code}`)
+    //}
 
     return (
         <div className="card">
@@ -75,11 +78,10 @@ export default function TeacherList() {
                                 ➕ افزودن استاد
                             </button>
                         </div>
-                        <UploadTeacherExcel onSuccess={fetchTeachers}  className="col-3"/>
-                        <UploadSchedulExcel className="col-3"/>
+                        <UploadTeacherExcel onSuccess={fetchTeachers} className="col-3" />
+                        <UploadSchedulExcel className="col-3" />
                     </div>
                 </div>
-
 
                 {/* فیلترها */}
                 <div className="row g-2 mb-3">
@@ -170,7 +172,7 @@ export default function TeacherList() {
                                     </td>
                                     <td>
                                         <div className="d-flex gap-1">
-                                            <button className="btn btn-sm btn-outline-success" onClick={() => handleWeeklySchedule(t.code)}>
+                                            <button className="btn btn-sm btn-outline-success" onClick={() => setScheduleCode(t.code)}>
                                                 📅 برنامه حضور هفتگی
                                             </button>
                                             <button
@@ -255,6 +257,13 @@ export default function TeacherList() {
                 </div>
             )}
 
+            {scheduleCode && (
+                <TeacherSchedule
+                    code={scheduleCode}
+                    term={activeTerm}
+                    onClose={() => setScheduleCode(null)}
+                />
+            )}
 
         </div>
     )
