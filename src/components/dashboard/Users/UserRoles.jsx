@@ -23,13 +23,21 @@ export default function UserRoles({ user, onBack }) {
 
     function toggleRole(roleId) {
         setAssigned(prev =>
-            prev.includes(roleId) ? prev.filter(id => id !== roleId) : [...prev, roleId]
+            prev.includes(roleId)
+                ? prev.filter(id => id !== roleId)
+                : [...prev, roleId]
         )
     }
 
     async function handleSave() {
         try {
-            await api.post(`/api/users/${user.id}/roles`, assigned)
+            // حذف نقش teacher قبل از ارسال
+            const filtered = assigned.filter(roleId => {
+                const role = roles.find(r => r.id === roleId)
+                return role && role.name.toLowerCase() !== 'teacher'
+            })
+
+            await api.post(`/api/users/${user.id}/roles`, filtered)
             setMessage('نقش‌ها با موفقیت ذخیره شدند')
         } catch (err) {
             setMessage('خطا در ذخیره نقش‌ها')
@@ -43,16 +51,18 @@ export default function UserRoles({ user, onBack }) {
                 {message && <div className="alert alert-info">{message}</div>}
 
                 <ul className="list-group mb-3">
-                    {roles.map(role => (
-                        <li key={role.id} className="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{role.name}</span>
-                            <input
-                                type="checkbox"
-                                checked={assigned.includes(role.id)}
-                                onChange={() => toggleRole(role.id)}
-                            />
-                        </li>
-                    ))}
+                    {roles
+                        .filter(role => role.name.toLowerCase() !== 'teacher') // حذف نقش teacher از لیست
+                        .map(role => (
+                            <li key={role.id} className="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{role.name}</span>
+                                <input
+                                    type="checkbox"
+                                    checked={assigned.includes(role.id)}
+                                    onChange={() => toggleRole(role.id)}
+                                />
+                            </li>
+                        ))}
                 </ul>
 
                 <div className="d-flex justify-content-between">

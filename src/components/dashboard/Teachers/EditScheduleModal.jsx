@@ -55,6 +55,18 @@ export default function EditScheduleModal({ item, term, onClose, onSave }) {
     }
 
     const handleSubmit = async () => {
+        const normalizedDay = normalizePersian(item.dayOfWeek || '')
+        const selectedB = normalizePersian(form.b || '')
+        const isFacultyLike = cooperation.includes('هیات علمی') || cooperation.includes('عضو هیات علمی')
+        if (
+            normalizedDay === 'سه شنبه' &&
+            isFacultyLike &&
+            (selectedB === 'تدریس حضوری' || selectedB === 'تدریس الکترونیک')
+        ) {
+            alert('در روز سه‌شنبه ساعت 12-10 امکان تدریس حضوری یا الکترونیک وجود ندارد.')
+            return
+        }
+
         const altText = hourSlots.filter(h => altSelected.includes(h.value)).map(h => h.text).join(' , ')
         const forbidText = hourSlots.filter(h => forbidSelected.includes(h.value)).map(h => h.text).join(' , ')
         const payload = {
@@ -146,7 +158,7 @@ export default function EditScheduleModal({ item, term, onClose, onSave }) {
                             {hourSlots.map(h => (
                                 <div key={h.value} className="form-check form-check-inline">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input custom-checkbox"
                                         type="checkbox"
                                         checked={altSelected.includes(h.value)}
                                         onChange={() => handleCheckboxChange('alt', h.value)}
@@ -171,7 +183,7 @@ export default function EditScheduleModal({ item, term, onClose, onSave }) {
                             {hourSlots.map(h => (
                                 <div key={h.value} className="form-check form-check-inline">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input custom-checkbox"
                                         type="checkbox"
                                         checked={forbidSelected.includes(h.value)}
                                         onChange={() => handleCheckboxChange('forbid', h.value)}

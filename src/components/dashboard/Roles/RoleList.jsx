@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../../utils/apiClient.js'
-import RoleModal from './RoleModal.jsx'
 
 export default function RoleList() {
     const [roles, setRoles] = useState([])
-    const [showModal, setShowModal] = useState(false)
-    const [selectedRole, setSelectedRole] = useState(null)
 
     useEffect(() => {
         fetchRoles()
@@ -16,31 +13,11 @@ export default function RoleList() {
         setRoles(res)
     }
 
-    function openAddModal() {
-        setSelectedRole(null)
-        setShowModal(true)
-    }
-
-    function openEditModal(role) {
-        setSelectedRole(role)
-        setShowModal(true)
-    }
-    async function handleDelete(roleId) {
-        if (!window.confirm('آیا از حذف این نقش مطمئن هستید؟')) return
-        try {
-            await api.delete(`/api/roles/${roleId}`)
-            fetchRoles()
-        } catch (err) {
-            console.error('خطا در حذف نقش:', err)
-        }
-    }
-
-
     return (
         <div className="container mt-4">
             <div className="d-flex align-items-center mb-3">
                 <h6 className="mb-0">مدیریت نقش‌ها</h6>
-                <button className="btn btn-success btn-sm ms-auto" onClick={openAddModal}>
+                <button className="btn btn-success btn-sm ms-auto" disabled>
                     افزودن نقش جدید
                 </button>
             </div>
@@ -61,10 +38,10 @@ export default function RoleList() {
                             <td>{role.title}</td>
                             <td>{role.description}</td>
                             <td>
-                                <button className="btn btn-warning btn-sm me-2" onClick={() => openEditModal(role)}>
+                                <button className="btn btn-warning btn-sm me-2" disabled>
                                     ویرایش
                                 </button>
-                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(role.id)}>
+                                <button className="btn btn-danger btn-sm" disabled>
                                     حذف
                                 </button>
                             </td>
@@ -72,14 +49,6 @@ export default function RoleList() {
                     ))}
                 </tbody>
             </table>
-
-            {showModal && (
-                <RoleModal
-                    role={selectedRole}
-                    onClose={() => setShowModal(false)}
-                    onSuccess={fetchRoles}
-                />
-            )}
         </div>
     )
 }
