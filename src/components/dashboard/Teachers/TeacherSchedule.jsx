@@ -10,23 +10,22 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const { centers } = useCenters()
     const [editItem, setEditItem] = useState(null)
     const weekOrder = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
-    const { hasRole, userInfo } = useUser()
+    const { hasRole } = useUser()
     const [termForm, setTermForm] = useState(null)
-    const canEditTerm = hasRole('admin') || (hasRole('teacher')) || (hasRole('centerAdmin'))
+    const canEditTerm = hasRole('admin') || hasRole('teacher') || hasRole('centerAdmin')
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const res = await api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`)
                 setData(res)
-                setTermForm(res.termInfo) // مقداردهی اولیه فرم ترمی
+                setTermForm(res.termInfo)
             } catch (err) {
                 console.error('خطا در دریافت اطلاعات برنامه هفتگی:', err)
             } finally {
                 setLoading(false)
             }
         }
-
         fetchData()
     }, [code, term])
 
@@ -40,6 +39,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             .replace(/\s+/g, ' ')
             .trim()
     }
+
     function getCellClass(value) {
         const normalized = normalizePersian(value || '')
         if (['تدریس حضوری', 'امکان تدریس در دانشگاه'].includes(normalized)) return 'cell-green'
@@ -49,8 +49,9 @@ export default function TeacherSchedule({ code, term, onClose }) {
         if (normalized === 'حضور در مرکز') return 'cell-peach'
         return ''
     }
+
     const renderTooltipCell = (text) => {
-        const short = text?.length > 15 ? text.slice(0, 25) + '...' : text
+        const short = text?.length > 25 ? text.slice(0, 25) + '...' : text || ''
         return (
             <span title={text} style={{ cursor: 'help' }}>
                 {short}
@@ -60,12 +61,12 @@ export default function TeacherSchedule({ code, term, onClose }) {
 
     const sortedSchedule = [...data.weeklySchedule]
         .filter(w => w.dayOfWeek !== 'جمعه')
-        .sort((a, b) => {
-            return weekOrder.indexOf(a.dayOfWeek) - weekOrder.indexOf(b.dayOfWeek)
-        })
+        .sort((a, b) => weekOrder.indexOf(a.dayOfWeek) - weekOrder.indexOf(b.dayOfWeek))
+
     const handleTermChange = (field, value) => {
         setTermForm(prev => ({ ...prev, [field]: value }))
     }
+
     const handleTermSubmit = async () => {
         try {
             await api.put(`/api/teacherTerm/${termForm.id}`, termForm)
@@ -78,136 +79,121 @@ export default function TeacherSchedule({ code, term, onClose }) {
 
     function handlePrintView(teacher, schedule, centers) {
         const win = window.open('', '_blank')
-
-        const getCenterTitle = code =>
-            centers.find(c => c.centerCode === code)?.title || code
+        const getCenterTitle = code => centers.find(c => c.centerCode === code)?.title || code
 
         const rows = schedule.map(ws => `
-    <tr>
-      <td>${ws.dayOfWeek}</td>
-      <td>${getCenterTitle(ws.center)}</td>
-      <td>${ws.a}</td>
-      <td>${ws.b}</td>
-      <td>${ws.c}</td>
-      <td>${ws.d}</td>
-      <td>${ws.e}</td>
-      <td>${ws.description}</td>
-    </tr>
-  `).join('')
+      <tr>
+        <td>${ws.dayOfWeek}</td>
+        <td>${getCenterTitle(ws.center)}</td>
+        <td>${ws.a || ''}</td>
+        <td>${ws.b || ''}</td>
+        <td>${ws.c || ''}</td>
+        <td>${ws.d || ''}</td>
+        <td>${ws.e || ''}</td>
+        <td>${ws.description || ''}</td>
+      </tr>
+    `).join('')
 
         const html = `
-    <html>
-      <head>
-        <title>چاپ برنامه هفتگی</title>
-        <style>
-          @font-face {
-            font-family: 'Vazirmatn';
-            src: url('/src/assets/fonts/Vazir/Vazir-Regular.woff2') format('woff2');
-          }
-          body {
-            font-family: 'Vazirmatn', sans-serif;
-            direction: rtl;
-            text-align: right;
-            padding: 50px 60px;
-            background-color: #fff;
-          }
-          h2 {
-            font-size: 20px;
-            margin-bottom: 35px;
-            text-align: center;
-            color: #000;
-          }
-          .info {
-            margin-bottom: 35px;
-            font-size: 15px;
-            line-height: 1.9;
-          }
-          .info-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 10px;
-          }
-          .info-item {
-            width: 23%;
-            font-weight: bold;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 15px;
-            margin-top: 20px;
-            table-layout: fixed;
-          }
-          th, td {
-            border: 1px solid #444;
-            padding: 6px 6px;
-            vertical-align: top;
-            height: 48px; /* ارتفاع ثابت برای دو خط */
-            line-height: 1.4;
-            overflow: hidden;
-          }
-
-
-          th {
-            background-color: #f5f5f5;
-            font-size: 16px;
-          }
-
-          /* عرض سفارشی ستون‌ها */
-          th:nth-child(1), td:nth-child(1) { width: 7%; }     /* روز/ساعت */
-          th:nth-child(2), td:nth-child(2) { width: 9%; }    /* مرکز */
-          th:nth-child(3), td:nth-child(3),
-          th:nth-child(4), td:nth-child(4),
-          th:nth-child(5), td:nth-child(5),
-          th:nth-child(6), td:nth-child(6),
-          th:nth-child(7), td:nth-child(7) { width: 12%; }    /* A تا E */
-          th:nth-child(8), td:nth-child(8) { width: 33%; }    /* توضیحات */
-        </style>
-      </head>
-      <body>
-        <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس</h2>
-        <div class="info">
-          <div class="info-row">
-            <div class="info-item">کد استادی: ${teacher.code}</div>
-            <div class="info-item">نام و نام خانوادگی: ${teacher.fname} ${teacher.lname}</div>
-            <div class="info-item">شماره تماس: ${teacher.mobile || '—'}</div>
-            <div class="info-item">محل خدمت: ${getCenterTitle(teacher.center)}</div>
+      <html>
+        <head>
+          <title>چاپ برنامه هفتگی</title>
+          <style>
+            @font-face {
+              font-family: 'Vazirmatn';
+              src: url('/src/assets/fonts/Vazir/Vazir-Regular.woff2') format('woff2');
+            }
+            body { font-family: 'Vazirmatn', sans-serif; direction: rtl; text-align: right; padding: 50px 60px; background-color: #fff; }
+            h2 { font-size: 20px; margin-bottom: 35px; text-align: center; color: #000; }
+            .info { margin-bottom: 35px; font-size: 15px; line-height: 1.9; }
+            .info-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px; }
+            .info-item { width: 23%; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 20px; table-layout: fixed; }
+            th, td { border: 1px solid #444; padding: 6px 6px; vertical-align: top; height: 48px; line-height: 1.4; overflow: hidden; }
+            th { background-color: #f5f5f5; font-size: 16px; }
+            th:nth-child(1), td:nth-child(1) { width: 7%; }
+            th:nth-child(2), td:nth-child(2) { width: 9%; }
+            th:nth-child(3), td:nth-child(3),
+            th:nth-child(4), td:nth-child(4),
+            th:nth-child(5), td:nth-child(5),
+            th:nth-child(6), td:nth-child(6),
+            th:nth-child(7), td:nth-child(7) { width: 12%; }
+            th:nth-child(8), td:nth-child(8) { width: 33%; }
+          </style>
+        </head>
+        <body>
+          <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس</h2>
+          <div class="info">
+            <div class="info-row">
+              <div class="info-item">کد استادی: ${teacher.code}</div>
+              <div class="info-item">نام و نام خانوادگی: ${teacher.fname} ${teacher.lname}</div>
+              <div class="info-item">شماره تماس: ${teacher.mobile || '—'}</div>
+              <div class="info-item">محل خدمت: ${getCenterTitle(teacher.center)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-item">رشته تحصیلی: ${teacher.fieldOfStudy}</div>
+              <div class="info-item">نوع همکاری: ${teacher.cooperationType}</div>
+              <div class="info-item">مرتبه علمی/مدرک: ${teacher.academicRank}</div>
+              <div class="info-item">پست اجرایی: ${teacher.executivePosition}</div>
+            </div>
           </div>
-          <div class="info-row">
-            <div class="info-item">رشته تحصیلی: ${teacher.fieldOfStudy}</div>
-            <div class="info-item">نوع همکاری: ${teacher.cooperationType}</div>
-            <div class="info-item">مرتبه علمی/مدرک: ${teacher.academicRank}</div>
-            <div class="info-item">پست اجرایی: ${teacher.executivePosition}</div>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>روز/ساعت</th>
-              <th>مرکز</th>
-              <th>08-10 (A)</th>
-              <th>10-12 (B)</th>
-              <th>12-14 (C)</th>
-              <th>14-16 (D)</th>
-              <th>16-18 (E)</th>
-              <th>توضیحات</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </body>
-    </html>
-  `
-
+          <table>
+            <thead>
+              <tr>
+                <th>روز/ساعت</th>
+                <th>مرکز</th>
+                <th>08-10 (A)</th>
+                <th>10-12 (B)</th>
+                <th>12-14 (C)</th>
+                <th>14-16 (D)</th>
+                <th>16-18 (E)</th>
+                <th>توضیحات</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+      </html>
+    `
         win.document.write(html)
         win.document.close()
     }
 
+    // -------------------------------
+    // محاسبات جدول خلاصه برای کل هفته
+    // -------------------------------
+    const allValues = data.weeklySchedule.flatMap(ws => {
+        const vals = [ws.a, ws.b, ws.c, ws.d, ws.e].map(v => normalizePersian(v))
+        return vals
+    })
 
+    // کل ساعات پژوهشی = تعداد سلول‌های دارای "فعالیت پژوهشی" × 2
+    const researchCount = allValues.filter(v => v === 'فعالیت پژوهشی').length
+    const researchHours = researchCount * 2
 
+    // پژوهشی در ساعات اداری (A-D) = تعداد سلول‌های a,b,c,d که "فعالیت پژوهشی" هستند × 2
+    const researchInOfficeCount = data.weeklySchedule.reduce((sum, ws) => {
+        const vals = [
+            normalizePersian(ws.a || ''),
+            normalizePersian(ws.b || ''),
+            normalizePersian(ws.c || ''),
+            normalizePersian(ws.d || ''),
+        ]
+        return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
+    }, 0)
+    const researchInOfficeHours = researchInOfficeCount * 2
+
+    // ساعات کاری اعلام‌شده (حضور، تدریس، پژوهش) = همه مقادیر به جز "عدم حضور در دانشگاه" و خالی‌ها × 2
+    const workCount = allValues.filter(v => v !== 'عدم حضور در دانشگاه' && v !== '').length
+    const workHours = workCount * 2
+
+    // ساعات عدم حضور اعلام‌شده = تعداد "عدم حضور در دانشگاه" × 2
+    const absentCount = allValues.filter(v => v === 'عدم حضور در دانشگاه').length
+    const absentHours = absentCount * 2
+
+    // -------------------------------
+    // رندر
+    // -------------------------------
     return (
         <div className="fullscreen-overlay">
             <div className="container py-4">
@@ -217,26 +203,28 @@ export default function TeacherSchedule({ code, term, onClose }) {
                             فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس
                         </h4>
                     </div>
-                    <button className="btn btn-outline-success me-2" onClick={() => handlePrintView(data.teacher, sortedSchedule, centers)}>
+
+                    <button
+                        className="btn btn-outline-success me-2"
+                        onClick={() => handlePrintView(data.teacher, sortedSchedule, centers)}
+                    >
                         📄برنامه هفتگی قابل چاپ
                     </button>
 
                     <button className="btn btn-outline-danger me-2" onClick={onClose}>بستن</button>
                 </div>
 
-
                 {/* اطلاعات استاد */}
                 <div className="mb-4">
-                    {/*<h6 className="text-secondary mb-3">اطلاعات استاد</h6>*/}
                     <div className="row mb-2">
                         <div className="col-md-3"><strong>کد استادی: {data.teacher.code}</strong></div>
                         <div className="col-md-3"><strong>نام و نام خانوادگی: {data.teacher.fname} {data.teacher.lname}</strong></div>
                         <div className="col-md-3"><strong>شماره تماس: {data.teacher.mobile}</strong></div>
                         <div className="col-md-3">
                             <strong>محل خدمت:{' '}
-                                {centers.find(c => c.centerCode === data.teacher.center)?.title || data.teacher.center}</strong>
+                                {centers.find(c => c.centerCode === data.teacher.center)?.title || data.teacher.center}
+                            </strong>
                         </div>
-
                     </div>
                     <div className="row">
                         <div className="col-md-3"><strong>رشته تحصیلی: {data.teacher.fieldOfStudy}</strong></div>
@@ -246,10 +234,8 @@ export default function TeacherSchedule({ code, term, onClose }) {
                     </div>
                 </div>
 
-
                 {/* برنامه هفتگی */}
                 <div>
-                    {/*<h6>برنامه هفتگی</h6>*/}
                     {data.weeklySchedule.length > 0 ? (
                         <table className="table table-bordered text-center align-middle">
                             <colgroup>
@@ -293,23 +279,26 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         <td>{renderTooltipCell(ws.description)}</td>
                                         <td>{renderTooltipCell(ws.alternativeHours)}</td>
                                         <td>{renderTooltipCell(ws.forbiddenHours)}</td>
-
                                         <td>
                                             {(hasRole('admin') || hasRole('centerAdmin') || hasRole('teacher')) && (
-                                                <button className="btn btn-sm btn-outline-primary"
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
                                                     onClick={() => setEditItem({ ...ws, cooperationType: data.teacher.cooperationType })}
-                                                >✏️ ویرایش</button>
+                                                >
+                                                    ✏️ ویرایش
+                                                </button>
                                             )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-
-                    ) : <p>برنامه‌ای ثبت نشده</p>}
+                    ) : (
+                        <p>برنامه‌ای ثبت نشده</p>
+                    )}
                 </div>
 
-                {/* ردیف اول: چک‌باکس + دلایل + مراکز */}
+                {/* ردیف اول: چک‌باکس + دلایل + مراکز همجوار + پیشنهادات و نیازها */}
                 <div className="mt-5">
                     <div className="row mb-3">
                         <div className="col-md-3 d-flex align-items-start">
@@ -404,24 +393,69 @@ export default function TeacherSchedule({ code, term, onClose }) {
                         )}
                     </div>
                 </div>
+                {/* جدول خلاصه ساعات در انتها */}
+                <div className="mt-4">
+                    <h6 className="fw-bold mb-2">خلاصه ساعات</h6>
+                    <table className="table table-bordered text-center">
+                        <thead>
+                            <tr>
+                                <th>نوع فعالیت</th>
+                                <th>حداکثر مجاز</th>
+                                <th>ساعات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>کل ساعات پژوهشی</td>
+                                <td>10</td>
+                                <td>{researchHours}</td>
+                            </tr>
+                            <tr>
+                                <td>ساعات پژوهشی در ساعات اداری</td>
+                                <td>6</td>
+                                <td
+                                    style={{
+                                        backgroundColor: researchInOfficeHours > 6 ? '#f8d7da' : 'transparent'
+                                    }}
+                                >
+                                    {researchInOfficeHours}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>ساعات کاری اعلام شده (شامل حضور، تدریس، پژوهش)</td>
+                                <td>40</td>
+                                <td
+                                    style={{
+                                        backgroundColor: workHours < 40 ? '#f8d7da' : 'transparent'
+                                    }}
+                                >
+                                    {workHours}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>ساعات عدم حضور اعلام شده</td>
+                                <td>-</td>
+                                <td>{absentHours}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
 
-
+                {editItem && (
+                    <EditScheduleModal
+                        item={editItem}
+                        term={term}
+                        onClose={() => setEditItem(null)}
+                        onSave={(updated) => {
+                            const updatedList = data.weeklySchedule.map(w =>
+                                w.id === updated.id ? { ...w, ...updated } : w
+                            )
+                            setData(prev => ({ ...prev, weeklySchedule: updatedList }))
+                        }}
+                    />
+                )}
             </div>
-            {editItem && (
-                <EditScheduleModal
-                    item={editItem}
-                    term={term}
-                    onClose={() => setEditItem(null)}
-                    onSave={(updated) => {
-                        const updatedList = data.weeklySchedule.map(w =>
-                            w.id === updated.id ? updated : w
-                        )
-                        setData(prev => ({ ...prev, weeklySchedule: updatedList }))
-                    }}
-                />
-            )}
-
         </div>
     )
 }

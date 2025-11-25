@@ -4,111 +4,114 @@ import TeacherSchedule from './dashboard/Teachers/TeacherSchedule.jsx'
 import { useTerms } from '../context/TermContext.jsx'
 
 export default function Sidebar({ onSelectPage, onLogout }) {
-    const [openGroups, setOpenGroups] = useState({ users: false, teachers: true })
-    const { hasRole, loading, userInfo,userRoles } = useUser()
-    const { activeTerm } = useTerms()
-    const [scheduleCode, setScheduleCode] = useState(null)
+  const [openGroups, setOpenGroups] = useState({ users: false, teachers: true })
+  const { hasRole, loading, userInfo } = useUser()
+  const { activeTerm } = useTerms()
+  const [scheduleCode, setScheduleCode] = useState(null)
 
-    function toggleGroup(key) {
-        setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }))
-    }
+  function toggleGroup(key) {
+    setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
-    if (loading) {
-        return (
-            <aside className="bg-white border-start shadow-sm" style={{ width: 260, minHeight: '100vh' }}>
-                <div className="p-3 text-center text-muted">در حال بارگذاری...</div>
-            </aside>
-        )
-    }
-
+  if (loading) {
     return (
-        <aside className="bg-white border-start shadow-sm" style={{ width: 260, minHeight: '100vh' }}>
-            <div className="p-3 border-bottom">
-                {/*<h6 className="m-0">داشبورد</h6>
-                <small className="text-muted">مدیریت سامانه</small>*/}
-                <div>
-                    {hasRole('admin')}
-                </div>
-            </div>
-
-            <div className="p-2">
-
-                {/* فقط استاد لاگین‌شده */}
-                {hasRole('teacher') && (
-                    <button className="btn btn-secondary w-100 text-start py-2 mb-2" onClick={() => setScheduleCode(userInfo.username)}>
-                        📅 برنامه حضور هفتگی
-                    </button>
-                )}
-
-                {/* گروه اساتید */}
-                {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')) && (
-                    <div className="mb-2">
-                        <button className="btn btn-light w-100 text-start py-2" onClick={() => toggleGroup('teachers')}>
-                            <span className="ms-2">اساتید</span>
-                            <span className="float-end">{openGroups.teachers ? '▾' : '▸'}</span>
-                        </button>
-                        {openGroups.teachers && (
-                            <div className="mt-1">
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1" onClick={() => onSelectPage('teachers')}>
-                                    اساتید
-                                </button>
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1">
-                                    گزارشات
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* تنظیمات سیستمی */}
-                {hasRole('admin') && (
-                    <div className="mb-2">
-                        <button className="btn btn-light w-100 text-start py-2" onClick={() => toggleGroup('users')}>
-                            <span className="ms-2">عملیات سیستمی</span>
-                            <span className="float-end">{openGroups.users ? '▾' : '▸'}</span>
-                        </button>
-                        {openGroups.users && (
-                            <div className="mt-1">
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1" onClick={() => onSelectPage('termCalender')}>
-                                    تقویم ترمی
-                                </button>
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1" onClick={() => onSelectPage('sarTerm')}>
-                                    سرترم
-                                </button>
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1" onClick={() => onSelectPage('users')}>
-                                    کاربران
-                                </button>
-                                <button className="btn btn-outline-secondary w-100 text-start py-2 mb-1" onClick={() => onSelectPage('roles')}>
-                                    نقش‌ها
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <hr />
-
-                {/* عملیات کاربر حاضر */}
-                <div className="mt-3">
-                    <button className="btn btn-outline-secondary w-100 text-start py-2 mb-2" onClick={() => onSelectPage('changePassword')}>
-                        تغییر رمز عبور
-                    </button>
-                    <button className="btn btn-outline-secondary w-100 text-start py-2 mb-2" onClick={() => onSelectPage('updateContact')}>
-                        تغییر موبایل/ایمیل
-                    </button>
-                    <button className="btn btn-outline-danger w-100 text-start py-2" onClick={onLogout}>
-                        خروج
-                    </button>
-                </div>
-            </div>
-
-            {scheduleCode && (
-                <TeacherSchedule
-                    code={scheduleCode}
-                    term={activeTerm}
-                    onClose={() => setScheduleCode(null)}
-                />
-            )}
-        </aside>
+      <aside className="sidebar">
+        <div className="loading">در حال بارگذاری...</div>
+      </aside>
     )
+  }
+
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <h6>داشبورد</h6>
+        {/*<small>مدیریت سامانه</small>*/}
+      </div>
+
+      <nav className="sidebar-nav">
+
+        {hasRole('teacher') && (
+          <div className="nav-item" onClick={() => setScheduleCode(userInfo.username)}>
+            <i className="fa fa-calendar"></i>
+            <span>برنامه حضور هفتگی</span>
+          </div>
+        )}
+
+        {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')) && (
+          <div className="nav-group">
+            <div className="nav-group-header" onClick={() => toggleGroup('teachers')}>
+              <i className="fa fa-users"></i>
+              <span>اساتید</span>
+              <i className={`fa ${openGroups.teachers ? 'fa-chevron-down' : 'fa-chevron-right'} ms-auto`}></i>
+            </div>
+            {openGroups.teachers && (
+              <div className="nav-sub">
+                <div className="nav-item" onClick={() => onSelectPage('teachers')}>
+                  <i className="fa fa-user"></i>
+                  <span>لیست اساتید</span>
+                </div>
+                <div className="nav-item">
+                  <i className="fa fa-file-alt"></i>
+                  <span>گزارشات</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {hasRole('admin') && (
+          <div className="nav-group">
+            <div className="nav-group-header" onClick={() => toggleGroup('users')}>
+              <i className="fa fa-cogs"></i>
+              <span>عملیات سیستمی</span>
+              <i className={`fa ${openGroups.users ? 'fa-chevron-down' : 'fa-chevron-right'} ms-auto`}></i>
+            </div>
+            {openGroups.users && (
+              <div className="nav-sub">
+                <div className="nav-item" onClick={() => onSelectPage('termCalender')}>
+                  <i className="fa fa-calendar-alt"></i>
+                  <span>تقویم ترمی</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('sarTerm')}>
+                  <i className="fa fa-layer-group"></i>
+                  <span>سرترم</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('users')}>
+                  <i className="fa fa-user-cog"></i>
+                  <span>کاربران</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('roles')}>
+                  <i className="fa fa-id-badge"></i>
+                  <span>نقش‌ها</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <hr />
+
+        <div className="nav-item" onClick={() => onSelectPage('changePassword')}>
+          <i className="fa fa-key"></i>
+          <span>تغییر رمز عبور</span>
+        </div>
+        <div className="nav-item" onClick={() => onSelectPage('updateContact')}>
+          <i className="fa fa-envelope"></i>
+          <span>تغییر موبایل/ایمیل</span>
+        </div>
+        <div className="nav-item logout" onClick={onLogout}>
+          <i className="fa fa-sign-out-alt"></i>
+          <span>خروج</span>
+        </div>
+      </nav>
+
+      {scheduleCode && (
+        <TeacherSchedule
+          code={scheduleCode}
+          term={activeTerm}
+          onClose={() => setScheduleCode(null)}
+        />
+      )}
+    </aside>
+  )
 }

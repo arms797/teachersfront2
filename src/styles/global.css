@@ -72,3 +72,64 @@ body {
   background-color: #e0ccaa !important; /* گلبهی روشن */
 }
 
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #f8f9fa;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  color: #333;         /* متن تیره برای خوانایی */
+  padding: 1rem;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-item i {
+  margin-left: 0.5rem;
+}
+
+.nav-item:hover {
+  background: #e9ecef;
+}
+
+.nav-item.logout {
+  color: #dc3545;
+}
+
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #e9ecef; /* خاکستری روشن */
+  color: #333;         /* متن تیره برای خوانایی */
+}
+
+.nav-sub {
+  margin-right: 1rem;
+  border-right: 2px solid #ddd;
+  padding-right: 0.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

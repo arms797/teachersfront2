@@ -56,14 +56,14 @@ export default function EditScheduleModal({ item, term, onClose, onSave }) {
 
     const handleSubmit = async () => {
         const normalizedDay = normalizePersian(item.dayOfWeek || '')
-        const selectedB = normalizePersian(form.b || '')
+        const selectedA = normalizePersian(form.a || '')
         const isFacultyLike = cooperation.includes('هیات علمی') || cooperation.includes('عضو هیات علمی')
         if (
             normalizedDay === 'سه شنبه' &&
             isFacultyLike &&
-            (selectedB === 'تدریس حضوری' || selectedB === 'تدریس الکترونیک')
+            (selectedA === 'تدریس حضوری' || selectedA === 'تدریس الکترونیک')
         ) {
-            alert('در روز سه‌شنبه ساعت 12-10 امکان تدریس حضوری یا الکترونیک وجود ندارد.')
+            alert('در روز سه‌شنبه ساعت 10-08 امکان تدریس حضوری یا الکترونیک وجود ندارد.')
             return
         }
 

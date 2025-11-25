@@ -1,15 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense, lazy } from 'react'
 import api from '../utils/apiClient.js'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext.jsx'
 import Sidebar from '../components/Sidebar.jsx'
-import RoleList from '../components/dashboard/Roles/RoleList.jsx'
-import ChangePassword from '../components/dashboard/ChangePassword.jsx'
-import UpdateContact from '../components/dashboard/UpdateContact.jsx'
-import UserList from '../components/dashboard/Users/UserList.jsx'
-import TeacherList from '../components/dashboard/Teachers/TeacherList.jsx'
-import TermCalendarList from '../components/dashboard/TermSetting/TermCalendarList.jsx'
-import SartermCreator from '../components/dashboard/TermSetting/SartermCreator.jsx'
+
+// همه کامپوننت‌ها lazy
+const RoleList = lazy(() => import('../components/dashboard/Roles/RoleList.jsx'))
+const ChangePassword = lazy(() => import('../components/dashboard/ChangePassword.jsx'))
+const UpdateContact = lazy(() => import('../components/dashboard/UpdateContact.jsx'))
+const UserList = lazy(() => import('../components/dashboard/Users/UserList.jsx'))
+const TeacherList = lazy(() => import('../components/dashboard/Teachers/TeacherList.jsx'))
+const TermCalendarList = lazy(() => import('../components/dashboard/TermSetting/TermCalendarList.jsx'))
+const SartermCreator = lazy(() => import('../components/dashboard/TermSetting/SartermCreator.jsx'))
+// اگر WeeklyScheduleList داری، همینجا lazy کن
+// const WeeklyScheduleList = lazy(() => import('../components/dashboard/WeeklySchedule/WeeklyScheduleList.jsx'))
 
 export default function DashboardContent({ onLogout }) {
     const navigate = useNavigate()
@@ -45,25 +49,55 @@ export default function DashboardContent({ onLogout }) {
     function renderContent() {
         switch (activePage) {
             case 'users':
-                return hasRole('admin') ? <UserList /> : <AccessDenied />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری لیست کاربران...</div>}>
+                        {hasRole('admin') ? <UserList /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'roles':
-                return hasRole('admin') ? <RoleList /> : <AccessDenied />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری نقش‌ها...</div>}>
+                        {hasRole('admin') ? <RoleList /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'teachers':
-                return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
-                    ? <TeacherList /> : <AccessDenied />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری لیست اساتید...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
+                            ? <TeacherList /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'weeklySchedule':
-                return hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
-                    ? <WeeklyScheduleList /> : <AccessDenied />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری برنامه هفتگی...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
+                            ? <WeeklyScheduleList /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'termCalender':
-                return hasRole('admin') ? <TermCalendarList /> : <AccessDenied />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری تقویم ترمی...</div>}>
+                        {hasRole('admin') ? <TermCalendarList /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'sarTerm':
-                return hasRole('admin') ? <SartermCreator /> : <AccessDenied />
-            case 'weeklyTT':
-                return hasRole('teacher')
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری سرترم...</div>}>
+                        {hasRole('admin') ? <SartermCreator /> : <AccessDenied />}
+                    </Suspense>
+                )
             case 'changePassword':
-                return <ChangePassword />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری تغییر رمز...</div>}>
+                        <ChangePassword />
+                    </Suspense>
+                )
             case 'updateContact':
-                return <UpdateContact />
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری تغییر اطلاعات تماس...</div>}>
+                        <UpdateContact />
+                    </Suspense>
+                )
             default:
                 return (
                     <div className="card">
@@ -77,6 +111,7 @@ export default function DashboardContent({ onLogout }) {
                 )
         }
     }
+
     function toggleSidebar() {
         setSidebarVisible(prev => !prev)
     }
@@ -101,7 +136,8 @@ export default function DashboardContent({ onLogout }) {
                         <button className='btn btn-secondary'
                             onClick={() => setActivePage('welcome')}
                         >
-                            بازگشت به صفحه اصلی</button>
+                            بازگشت به صفحه اصلی
+                        </button>
                     </div>
                     {message && <div className="alert alert-info">{message}</div>}
                     {renderContent()}

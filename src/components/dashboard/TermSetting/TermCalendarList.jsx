@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../../utils/apiClient.js'
+import { useTerms } from '../../../context/TermContext.jsx'
 
 
 export default function TermCalendarList() {
@@ -8,6 +9,7 @@ export default function TermCalendarList() {
     const [message, setMessage] = useState(null)
     const [form, setForm] = useState({ term: '', title: '', start: '', end: '' })
     const [editMode, setEditMode] = useState(false)
+    const { refreshTerms } = useTerms()
 
     useEffect(() => {
         fetchTerms()
@@ -43,6 +45,7 @@ export default function TermCalendarList() {
             setForm({ term: '', title: '', start: '', end: '' })
             setEditMode(false)
             fetchTerms()
+            refreshTerms()
         } catch (err) {
             setMessage(err.message || 'خطا در ذخیره اطلاعات')
         }
@@ -62,6 +65,7 @@ export default function TermCalendarList() {
             await api.delete(`/api/TermCalender/${term}`)
             setMessage('ترم حذف شد')
             fetchTerms()
+            refreshTerms()
         } catch (err) {
             setMessage('خطا در حذف ترم')
         }
