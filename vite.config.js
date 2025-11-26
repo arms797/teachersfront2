@@ -5,7 +5,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  /*server: {
+  server: {
     // لطفاً مسیر فایل‌های گواهی توسعه را تنظیم کن:
     https: {
       key: fs.readFileSync(path.resolve(__dirname, 'cert/localhost-key.pem')),
@@ -21,8 +21,8 @@ export default defineConfig({
       cert: fs.readFileSync(path.resolve(__dirname, 'cert/localhost.pem')),
     },
     port: 5173,
-  }*/
- server: {
+  }
+ /*server: {
     port: 5173,
     strictPort: true,
     cors: true,
@@ -31,5 +31,5 @@ export default defineConfig({
   preview: {
     port: 5173,
     // بدون https → فقط http
-  }
+  }*/
 })
