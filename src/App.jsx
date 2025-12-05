@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Home from './pages/Home.jsx'
 import { UserProvider } from './context/UserContext.jsx'
 
 function ProtectedRoute({ children, isAuthenticated }) {
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
   return children
 }
@@ -14,9 +15,7 @@ function ProtectedRoute({ children, isAuthenticated }) {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // اگر نیاز شد، می‌توانیم چک وضعیت از بک‌اند بگیریم؛ فعلاً از state استفاده می‌کنیم.
   useEffect(() => {
-    // ساده: اگر کوکی auth ست شده، کاربر را احراز می‌کنیم
     const hasAuthCookie = document.cookie.split('; ').some(c => c.startsWith('tb2_auth='))
     setIsAuthenticated(hasAuthCookie)
   }, [])
@@ -24,7 +23,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
+        {/* صفحه پیش‌فرض */}
+        <Route path="/" element={<Home />} />
+
+        {/* صفحه لاگین */}
+        <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
+
+        {/* داشبورد محافظت‌شده */}
         <Route
           path="/dashboard"
           element={
@@ -33,6 +38,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* مسیرهای ناشناخته → هدایت به صفحه اصلی */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

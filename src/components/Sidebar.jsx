@@ -4,7 +4,7 @@ import TeacherSchedule from './dashboard/Teachers/TeacherSchedule.jsx'
 import { useTerms } from '../context/TermContext.jsx'
 
 export default function Sidebar({ onSelectPage, onLogout }) {
-  const [openGroups, setOpenGroups] = useState({ users: false, teachers: true })
+  const [openGroups, setOpenGroups] = useState({ users: false, teachers: true, home: false })
   const { hasRole, loading, userInfo } = useUser()
   const { activeTerm } = useTerms()
   const [scheduleCode, setScheduleCode] = useState(null)
@@ -53,6 +53,28 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                 <div className="nav-item">
                   <i className="fa fa-file-alt"></i>
                   <span>گزارشات</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(hasRole('admin') || hasRole('centerAdmin')) && (
+          <div className="nav-group">
+            <div className="nav-group-header" onClick={() => toggleGroup('home')}>
+              <i className="fa fa-cogs"></i>
+              <span>مدیریت صفحه نخست</span>
+              <i className={`fa ${openGroups.home ? 'fa-chevron-down' : 'fa-chevron-right'} ms-auto`}></i>
+            </div>
+            {openGroups.home && (
+              <div className="nav-sub">
+                <div className="nav-item" onClick={() => onSelectPage('exam')}>
+                  <i className="fa fa-calendar-alt"></i>
+                  <span>حوزه آزمونی دانشجو</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('announcement')}>
+                  <i className="fa fa-calendar-alt"></i>
+                  <span>اطلاعیه ها</span>
                 </div>
               </div>
             )}
