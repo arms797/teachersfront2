@@ -13,6 +13,7 @@ const TeacherList = lazy(() => import('../components/dashboard/Teachers/TeacherL
 const TermCalendarList = lazy(() => import('../components/dashboard/TermSetting/TermCalendarList.jsx'))
 const SartermCreator = lazy(() => import('../components/dashboard/TermSetting/SartermCreator.jsx'))
 const AnnouncementsManager = lazy(() => import('../components/dashboard/ManageHome/AnnouncementsManager.jsx'))
+const ComponentFeaturesManager = lazy(() => import('../components/dashboard/ManageHome/ComponentFeaturesManager.jsx'))
 
 // اگر WeeklyScheduleList داری، همینجا lazy کن
 // const WeeklyScheduleList = lazy(() => import('../components/dashboard/WeeklySchedule/WeeklyScheduleList.jsx'))
@@ -108,8 +109,14 @@ export default function DashboardContent({ onLogout }) {
                 )
             case 'announcement':
                 return (
-                    <Suspense fallback={<div>در حال بارگزاری صفحه مدیریت NP...</div>}>
+                    <Suspense fallback={<div>در حال بارگزاری صفحه مدیریت اطلاعیه ها...</div>}>
                         {hasRole('admin') || hasRole('centerAdmin') ? <AnnouncementsManager /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'manageComponents':
+                return (
+                    <Suspense fallback={<div>در حال بارگزاری صفحه مدیریت کامپوننت ها...</div>}>
+                        {hasRole('admin') ? <ComponentFeaturesManager /> : <AccessDenied />}
                     </Suspense>
                 )
             default:

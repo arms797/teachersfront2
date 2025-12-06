@@ -76,6 +76,10 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                   <i className="fa fa-calendar-alt"></i>
                   <span>اطلاعیه ها</span>
                 </div>
+                <div className="nav-item" onClick={() => onSelectPage('manageComponents')}>
+                  <i className="fa fa-calendar-alt"></i>
+                  <span>مدیریت کامپوننت ها</span>
+                </div>
               </div>
             )}
           </div>

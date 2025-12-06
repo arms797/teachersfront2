@@ -1,9 +1,24 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ExamSeatCard from '../components/home/ExamSeatCard.jsx'
 import AnnouncementsAccordion from '../components/home/AnnouncementsAccordion.jsx'
+import api from '../utils/apiClient.js'
 
 export default function HomePage() {
+  const [activeFeatures, setActiveFeatures] = useState([])
+
+  useEffect(() => {
+    async function fetchActiveFeatures() {
+      try {
+        const res = await api.get('/api/componentfeature/active')
+        setActiveFeatures(res.data || [])
+      } catch (err) {
+        console.error("خطا در دریافت کامپوننت‌های فعال:", err)
+      }
+    }
+    fetchActiveFeatures()
+  }, [])
+
   return (
     <div className="container mt-4">
       {/* Header */}
@@ -13,10 +28,10 @@ export default function HomePage() {
       </div>
 
       {/* Exam Seat Card */}
-      <ExamSeatCard />
+      {activeFeatures.some(f => f.name === "examSeat") && <ExamSeatCard />}
 
       {/* Announcements Accordion */}
-      <AnnouncementsAccordion />
+      {activeFeatures.some(f => f.name === "announcementsAccordion") && <AnnouncementsAccordion />}
     </div>
   )
 }
