@@ -99,7 +99,7 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
 
           <p className="text-center mt-3 text-muted" style={{ fontSize: '0.9rem' }}>
-            فقط از طریق HTTPS و با کوکی امن وارد شوید.
+            {/* فقط از طریق HTTPS و با کوکی امن وارد شوید.*/}
           </p>
         </div>
       </div>

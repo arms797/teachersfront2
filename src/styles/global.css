@@ -133,3 +133,30 @@ body {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 2000;
+  overflow-x: auto;   /* اسکرول افقی */
+  overflow-y: auto;   /* اسکرول عمودی */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* حالت استاد: عرض کنترل‌شده */
+.teacher-view .schedule-inner {
+  max-width: 1000px;   /* عرض مناسب و مرتب */
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* حالت ادمین: عرض بزرگ‌تر برای جدول */
+.admin-view .schedule-inner {
+  min-width: 1200px;   /* بزرگ‌تر از صفحه تا اسکرول افقی فعال شود */
+  padding: 16px;
+}
+
+
+

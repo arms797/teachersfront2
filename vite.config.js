@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
-import path from 'path'
+//import fs from 'fs'
+//import path from 'path'
 
 export default defineConfig({
-  base: '/',
+  
   plugins: [react()],
+  base: './',
   /*server: {
     // لطفاً مسیر فایل‌های گواهی توسعه را تنظیم کن:
     https: {

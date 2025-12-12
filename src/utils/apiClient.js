@@ -1,21 +1,22 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost'
+// آدرس API از فایل محیطی خوانده می‌شود
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // send/receive HttpOnly cookies
+  withCredentials: true, // ارسال/دریافت کوکی‌های HttpOnly
   headers: { 'Content-Type': 'application/json' },
 })
 
-// read CSRF token from cookie
+// خواندن CSRF token از کوکی
 function getCsrfToken() {
   const match = document.cookie.split('; ').find(c => c.startsWith('tb2_csrf='))
   return match ? decodeURIComponent(match.split('=')[1]) : null
 }
 
-// add CSRF header for all requests
+// اضافه کردن CSRF header برای همه درخواست‌ها
 api.interceptors.request.use(
   (config) => {
     const csrf = getCsrfToken()
@@ -25,7 +26,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// normalize errors
+// نرمال‌سازی پاسخ‌ها و خطاها
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {

@@ -15,7 +15,6 @@ export function TermProvider({ children }) {
 
             if (Array.isArray(res)) {
                 setAllTerms(res)
-
                 const active = res.find(t => t.active)
                 setActiveTerm(active?.term || null)
                 setSelectedTerm(active?.term || null)
