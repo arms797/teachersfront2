@@ -30,8 +30,9 @@ export default function AddTeacherForm({ onSuccess }) {
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!form.code || !form.fname || !form.lname || !form.cooperationType || !form.academicRank) {
-            alert('لطفاً تمام فیلدهای ضروری را تکمیل کنید')
+        if (!form.code || !form.fname || !form.lname || !form.cooperationType
+            || !form.academicRank || !form.nationalCode) {
+            alert('لطفاً تمام فیلدهای ستاره دار را تکمیل کنید')
             return
         }
 
@@ -77,7 +78,8 @@ export default function AddTeacherForm({ onSuccess }) {
                 </div>
 
                 <div className="col-md-4">
-                    <label className="form-label">کد ملی</label>
+                    <label className="form-label">  کد ملی <span className="text-danger">*</span>
+                    </label>
                     <input name="nationalCode" className="form-control" value={form.nationalCode} onChange={handleChange} />
                 </div>
 

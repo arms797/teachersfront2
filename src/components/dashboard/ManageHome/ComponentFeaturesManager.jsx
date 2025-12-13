@@ -77,7 +77,7 @@ export default function ComponentFeaturesManager() {
               className="form-control form-control-sm"
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              disabled={!!form.id} // 👈 فقط هنگام ویرایش غیرقابل تغییر
+              disabled={!form.id} // 👈 فقط هنگام ویرایش غیرقابل تغییر
             />
           </div>
           <div className="mb-2">
