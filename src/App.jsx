@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Home from './pages/Home.jsx'
 import { UserProvider } from './context/UserContext.jsx'
+import ExamSeat from './pages/ExamSeat.jsx'
 
 function ProtectedRoute({ children, isAuthenticated }) {
   if (!isAuthenticated) {
@@ -25,6 +26,9 @@ export default function App() {
       <Routes>
         {/* صفحه پیش‌فرض */}
         <Route path="/" element={<Home />} />
+
+        {/*صفحه نمایش شماره صندلی دانشجویان*/}
+        <Route path="/examseat" element={<ExamSeat />} />
 
         {/* صفحه لاگین */}
         <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />

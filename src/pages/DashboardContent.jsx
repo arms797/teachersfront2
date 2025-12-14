@@ -14,7 +14,7 @@ const TermCalendarList = lazy(() => import('../components/dashboard/TermSetting/
 const SartermCreator = lazy(() => import('../components/dashboard/TermSetting/SartermCreator.jsx'))
 const AnnouncementsManager = lazy(() => import('../components/dashboard/ManageHome/AnnouncementsManager.jsx'))
 const ComponentFeaturesManager = lazy(() => import('../components/dashboard/ManageHome/ComponentFeaturesManager.jsx'))
-
+const ExamSeatManage = lazy(() => import('../components/dashboard/ManageHome/ExamSeatManage.jsx'))
 // اگر WeeklyScheduleList داری، همینجا lazy کن
 // const WeeklyScheduleList = lazy(() => import('../components/dashboard/WeeklySchedule/WeeklyScheduleList.jsx'))
 
@@ -104,7 +104,8 @@ export default function DashboardContent({ onLogout }) {
             case 'exam':
                 return (
                     <Suspense fallback={<div>در حال بارگزاری صفحه مدیریت NP...</div>}>
-                        <UpdateContact />
+                        {hasRole('admin') || hasRole('centerAdmin') ?
+                            <ExamSeatManage /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'announcement':
