@@ -3,6 +3,7 @@ import api from '../../../utils/apiClient.js'
 import { useCenters } from '../../../context/CenterContext.jsx'
 import EditScheduleModal from './EditScheduleModal.jsx'
 import { useUser } from '../../../context/UserContext.jsx'
+import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
 
 export default function TeacherSchedule({ code, term, onClose }) {
     const [data, setData] = useState(null)
@@ -18,6 +19,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
         async function fetchData() {
             try {
                 const res = await api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`)
+                //console.log(res)
                 setData(res)
                 setTermForm(res.termInfo)
             } catch (err) {
@@ -76,6 +78,8 @@ export default function TeacherSchedule({ code, term, onClose }) {
             alert('❌ خطا در ذخیره اطلاعات ترم')
         }
     }
+    const cooperation = normalizePersian(data.teacher.cooperationType)
+    const isFaculty = cooperation.includes('مدرس') && cooperation.includes('مدعو')
 
     function handlePrintView(teacher, schedule, centers) {
         const win = window.open('', '_blank')
@@ -122,7 +126,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
           </style>
         </head>
         <body>
-          <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس</h2>
+          <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال 4042</h2>
           <div class="info">
             <div class="info-row">
               <div class="info-item">کد استادی: ${teacher.code}</div>
@@ -177,7 +181,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             normalizePersian(ws.a || ''),
             normalizePersian(ws.b || ''),
             normalizePersian(ws.c || ''),
-            normalizePersian(ws.d || ''),
+            //normalizePersian(ws.d || ''),
         ]
         return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
     }, 0)
@@ -194,15 +198,19 @@ export default function TeacherSchedule({ code, term, onClose }) {
     // -------------------------------
     // رندر
     // -------------------------------
+    {/*<PersianDigitsProvider>*/ }
+    {/*</PersianDigitsProvider>*/ }
     return (
+
         <div className={`fullscreen-overlay ${hasRole('teacher') ? 'teacher-view' : 'admin-view'}`}>
-            <div className="container py-4">
+            <div className="container py-4 ">
                 <div className="schedule-inner">
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <button className="btn btn-outline-danger me-2" onClick={onClose}>بستن</button>
                         <div className="w-100 text-center mb-4">
                             <h4 className="fw-bold text-primary">
-                                فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس
+                                فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال
+                                4042
                             </h4>
                         </div>
 
@@ -257,11 +265,26 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                     <tr>
                                         <th>روز/ساعت</th>
                                         <th>مرکز</th>
-                                        <th>08-10 (A)</th>
-                                        <th>10-12 (B)</th>
-                                        <th>12-14 (C)</th>
-                                        <th>14-16 (D)</th>
-                                        <th>16-18 (E)</th>
+                                        <th>
+                                            <div>A</div>
+                                            <div>08-10</div>
+                                        </th>
+                                        <th>
+                                            <div>B</div>
+                                            <div>10-12</div>
+                                        </th>
+                                        <th>
+                                            <div>C</div>
+                                            <div>12-14</div>
+                                        </th>
+                                        <th>
+                                            <div>D</div>
+                                            <div>14-16</div>
+                                        </th>
+                                        <th>
+                                            <div>E</div>
+                                            <div>16-18</div>
+                                        </th>
                                         <th>توضیحات</th>
                                         <th>ساعات جایگزین</th>
                                         <th>ساعات ممنوع</th>
@@ -302,45 +325,60 @@ export default function TeacherSchedule({ code, term, onClose }) {
 
                     {/* ردیف اول: چک‌باکس + دلایل + مراکز همجوار + پیشنهادات و نیازها */}
                     <div className="mt-5">
-                        <div className="row mb-3">
-                            <div className="col-md-3 d-flex align-items-start">
-                                <div className="form-check mt-2">
-                                    <input
-                                        className="form-check-input custom-checkbox"
-                                        type="checkbox"
-                                        checked={termForm?.isNeighborTeaching || false}
-                                        onChange={e => canEditTerm && handleTermChange('isNeighborTeaching', e.target.checked)}
-                                        id="chk-neighbor"
-                                        disabled={!canEditTerm}
-                                    />
-                                    <label className="form-check-label ms-2" htmlFor="chk-neighbor">
-                                        متقاضی تدریس در مراکز همجوار هستم
-                                    </label>
+                        {!isFaculty && (
+                            <div className="row mb-3">
+                                <div className="col-md-3 d-flex align-items-start">
+                                    <div className="form-check mt-2">
+                                        <input
+                                            className="form-check-input custom-checkbox"
+                                            type="checkbox"
+                                            checked={termForm?.isNeighborTeaching || false}
+                                            onChange={e => canEditTerm && handleTermChange('isNeighborTeaching', e.target.checked)}
+                                            id="chk-neighbor"
+                                            disabled={!canEditTerm}
+                                        />
+                                        <label className="form-check-label" htmlFor="chk-neighbor">
+                                            متقاضی تدریس در مراکز همجوار هستم
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="col-md-4">
-                                <label className="form-label">دلایل تدریس در مراکز همجوار</label>
-                                <textarea
-                                    className="form-control"
-                                    rows="2"
-                                    value={termForm?.neighborTeaching || ''}
-                                    onChange={e => canEditTerm && handleTermChange('neighborTeaching', e.target.value)}
-                                    readOnly={!canEditTerm}
-                                />
-                            </div>
+                                <div className="col-md-4">
+                                    <label className="form-label">دلایل تدریس در مراکز همجوار</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="2"
+                                        value={termForm?.neighborTeaching || ''}
+                                        onChange={e => canEditTerm && handleTermChange('neighborTeaching', e.target.value)}
+                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
+                                    />
+                                </div>
 
-                            <div className="col-md-5">
-                                <label className="form-label">مراکز همجوار که تقاضای تدریس دارم</label>
-                                <textarea
-                                    className="form-control"
-                                    rows="2"
-                                    value={termForm?.neighborCenters || ''}
-                                    onChange={e => canEditTerm && handleTermChange('neighborCenters', e.target.value)}
-                                    readOnly={!canEditTerm}
-                                />
+                                <div className="col-md-4">
+                                    <label className="form-label">مراکز همجوار که تقاضای تدریس دارم</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="2"
+                                        value={termForm?.neighborCenters || ''}
+                                        onChange={e => canEditTerm && handleTermChange('neighborCenters', e.target.value)}
+                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
+                                    />
+                                </div>
+
+                                <div className="col-md-12 mt-3">
+                                    <p className={termForm?.isNeighborTeaching ? "text-success" : "text-muted"}>
+                                        در صورتی که نیاز به تدریس در مراکز همجوار دارید، لازم است فرم مربوط به مجوز تدریس در مراکز همجوار را تکمیل نموده و مراحل اداری لازم را طی نمایید.                                    </p>
+                                    <a
+                                        href="/files/neighbor-teaching-guide.pdf"
+                                        className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
+                                        download
+                                    >
+                                        دریافت فرم
+                                    </a>
+                                </div>
+
                             </div>
-                        </div>
+                        )}
 
                         <div className="row mb-4">
                             <div className="col-md-6">
@@ -410,7 +448,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                 <tr>
                                     <td>کل ساعات پژوهشی</td>
                                     <td>10</td>
-                                    <td>{researchHours}</td>
+                                    <td>researchHours</td>
                                 </tr>
                                 <tr>
                                     <td>ساعات پژوهشی در ساعات اداری</td>
@@ -420,7 +458,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                             backgroundColor: researchInOfficeHours > 6 ? '#f8d7da' : 'transparent'
                                         }}
                                     >
-                                        {researchInOfficeHours}
+                                        researchInOfficeHours
                                     </td>
                                 </tr>
                                 <tr>
@@ -431,13 +469,13 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                             backgroundColor: workHours < 40 ? '#f8d7da' : 'transparent'
                                         }}
                                     >
-                                        {workHours}
+                                        workHours
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>ساعات عدم حضور اعلام شده</td>
                                     <td>-</td>
-                                    <td>{absentHours}</td>
+                                    <td>absentHours</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -459,5 +497,6 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 )}
             </div>
         </div>
+
     )
 }
