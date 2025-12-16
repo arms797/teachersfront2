@@ -158,5 +158,10 @@ body {
   padding: 16px;
 }
 
-
+@media print {
+  .signatures {
+    page-break-inside: avoid; /* نذار وسطش شکسته بشه */
+    margin-top: 20px;
+  }
+}
 

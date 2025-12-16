@@ -6,7 +6,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState('user') // 'user' یا 'teacher'
+  const [userType, setUserType] = useState('teacher') // 'user' یا 'teacher'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
