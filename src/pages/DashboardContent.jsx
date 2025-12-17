@@ -3,6 +3,8 @@ import api from '../utils/apiClient.js'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext.jsx'
 import Sidebar from '../components/Sidebar.jsx'
+import logo from '../assets/logo.svg'
+
 
 // همه کامپوننت‌ها lazy
 const RoleList = lazy(() => import('../components/dashboard/Roles/RoleList.jsx'))
@@ -15,8 +17,9 @@ const SartermCreator = lazy(() => import('../components/dashboard/TermSetting/Sa
 const AnnouncementsManager = lazy(() => import('../components/dashboard/ManageHome/AnnouncementsManager.jsx'))
 const ComponentFeaturesManager = lazy(() => import('../components/dashboard/ManageHome/ComponentFeaturesManager.jsx'))
 const ExamSeatManage = lazy(() => import('../components/dashboard/ManageHome/ExamSeatManage.jsx'))
-// اگر WeeklyScheduleList داری، همینجا lazy کن
-// const WeeklyScheduleList = lazy(() => import('../components/dashboard/WeeklySchedule/WeeklyScheduleList.jsx'))
+const WeeklyChangesReport = lazy(() => import('../components/dashboard/Reports/WeeklyChangesReport.jsx'))
+const DailyTeachers = lazy(() => import('../components/dashboard/Reports/DailyTeachers.jsx'))
+
 
 export default function DashboardContent({ onLogout }) {
     const navigate = useNavigate()
@@ -75,6 +78,20 @@ export default function DashboardContent({ onLogout }) {
                     <Suspense fallback={<div>در حال بارگذاری برنامه هفتگی...</div>}>
                         {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
                             ? <WeeklyScheduleList /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'rptFormCompletion':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری گزارش ...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin')
+                            ? <WeeklyChangesReport /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'rptDaily':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری گزارش هفتگی...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin')
+                            ? <DailyTeachers /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'termCalender':
@@ -154,12 +171,15 @@ export default function DashboardContent({ onLogout }) {
                         >
                             ☰
                         </button>
-                        <h5 className="m-0"> زمانبندی برنامه هفتگی اساتید</h5>
                         <button className='btn btn-secondary'
                             onClick={() => setActivePage('welcome')}
                         >
                             بازگشت به صفحه اصلی
                         </button>
+                        <h5 className="m-0"> زمانبندی برنامه هفتگی اساتید</h5>
+
+                        <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
+
                     </div>
                     {message && <div className="alert alert-info">{message}</div>}
                     {renderContent()}

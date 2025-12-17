@@ -4,6 +4,8 @@ import { useCenters } from '../../../context/CenterContext.jsx'
 import EditScheduleModal from './EditScheduleModal.jsx'
 import { useUser } from '../../../context/UserContext.jsx'
 import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
+import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
+import logo from '../../../assets/logo.svg'
 
 export default function TeacherSchedule({ code, term, onClose }) {
     const [data, setData] = useState(null)
@@ -101,7 +103,8 @@ export default function TeacherSchedule({ code, term, onClose }) {
         <td>${ws.e || ''}</td>
       </tr>
     `).join('')
-
+        //const fontAddress = '/src/assets/fonts/Vazir/Vazir-Regular.woff2'
+        //const logo = '/src/assets/logo.svg'
         const html = `
         <html>
             <head>
@@ -109,7 +112,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             <style>
                 @font-face {
                 font-family: 'Vazirmatn';
-                src: url('/src/assets/fonts/Vazir/Vazir-Regular.woff2') format('woff2');
+                src: url(${fontAddress}) format('woff2');
                 }
                 body { font-family: 'Vazirmatn', sans-serif; direction: rtl; text-align: right; padding: 50px 60px; background-color: #fff; }
                 h2 { font-size: 20px; margin-bottom: 35px; text-align: center; color: #000; }
@@ -136,7 +139,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             </head>
             <body>
                 <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:10px;">
-                    <img src="/src/assets/logo.svg" alt="آرم دانشگاه" style="width:80px; height:auto; margin-bottom:10px;" />
+                    <img src=${logo} alt="آرم دانشگاه" style="width:80px; height:auto; margin-bottom:10px;" />
                     <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال ${toPersianDigits(4042)}</h2>
                 </div>
 

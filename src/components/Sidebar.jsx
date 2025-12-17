@@ -50,16 +50,20 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                   <i className="fa fa-user"></i>
                   <span>لیست اساتید</span>
                 </div>
-                <div className="nav-item">
+                <div className="nav-item" onClick={() => onSelectPage('rptFormCompletion')}>
                   <i className="fa fa-file-alt"></i>
-                  <span>گزارشات</span>
+                  <span>گزارش تکمیل فرم برنامه هفتگی</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('rptDaily')}>
+                  <i className="fa fa-file-alt"></i>
+                  <span> گزارش برنامه روزانه اساتید</span>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {(hasRole('admin') || hasRole('centerAdmin')) && (
+        {(hasRole('admin')) && (
           <div className="nav-group">
             <div className="nav-group-header" onClick={() => toggleGroup('home')}>
               <i className="fa fa-cogs"></i>

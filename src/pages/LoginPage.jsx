@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../utils/apiClient.js'
+import logo from '../assets/logo.svg'
 
 export default function LoginPage({ onLoginSuccess }) {
   const navigate = useNavigate()
@@ -31,8 +32,12 @@ export default function LoginPage({ onLoginSuccess }) {
 
   return (
     <div className="container py-5">
+      <div className="d-flex justify-content-end mb-3">
+        <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "auto" }} />
+      </div>
       <div className="row justify-content-center">
         <div className="col-md-5">
+
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="card-title mb-4 text-center">ورود به سامانه</h5>
@@ -43,24 +48,32 @@ export default function LoginPage({ onLoginSuccess }) {
                   <input
                     className="form-check-input"
                     type="radio"
+                    id="userRadio"
                     name="userType"
                     value="user"
                     checked={userType === 'user'}
                     onChange={() => setUserType('user')}
                   />
-                  <label className="form-check-label">کاربر سایت</label>
+                  <label className="form-check-label" htmlFor="userRadio">
+                    کاربر سایت
+                  </label>
                 </div>
+
                 <div className="form-check form-check-inline">
                   <input
                     className="form-check-input"
                     type="radio"
+                    id="teacherRadio"
                     name="userType"
                     value="teacher"
                     checked={userType === 'teacher'}
                     onChange={() => setUserType('teacher')}
                   />
-                  <label className="form-check-label">استاد</label>
+                  <label className="form-check-label" htmlFor="teacherRadio">
+                    استاد
+                  </label>
                 </div>
+
               </div>
 
               {error && <div className="alert alert-danger">{error}</div>}
