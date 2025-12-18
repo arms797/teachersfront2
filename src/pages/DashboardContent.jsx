@@ -171,12 +171,14 @@ export default function DashboardContent({ onLogout }) {
                         >
                             ☰
                         </button>
-                        <button className='btn btn-secondary'
+                        <h4
+                            className="m-0"
+                            style={{ cursor: "pointer", color: "#002864ff" }}
                             onClick={() => setActivePage('welcome')}
                         >
-                            بازگشت به صفحه اصلی
-                        </button>
-                        <h5 className="m-0"> زمانبندی برنامه هفتگی اساتید</h5>
+                            زمانبندی برنامه هفتگی اساتید
+                        </h4>
+
 
                         <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
 

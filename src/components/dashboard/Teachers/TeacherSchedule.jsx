@@ -245,6 +245,8 @@ export default function TeacherSchedule({ code, term, onClose }) {
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <button className="btn btn-outline-danger me-2" onClick={onClose}>بستن</button>
                             <div className="w-100 text-center mb-4">
+                                <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
+
                                 <h4 className="fw-bold text-primary">
                                     فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال
                                     4042

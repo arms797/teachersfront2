@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
-import Home from './pages/Home.jsx'
-import { UserProvider } from './context/UserContext.jsx'
-import ExamSeat from './pages/ExamSeat.jsx'
+//import Home from './pages/Home.jsx'
+//import { UserProvider } from './context/UserContext.jsx'
+//import ExamSeat from './pages/ExamSeat.jsx'
 
 function ProtectedRoute({ children, isAuthenticated }) {
   if (!isAuthenticated) {
@@ -25,10 +25,11 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* صفحه پیش‌فرض */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
 
-        {/*صفحه نمایش شماره صندلی دانشجویان*/}
+        {/*صفحه نمایش شماره صندلی دانشجویان
         <Route path="/examseat" element={<ExamSeat />} />
+        */}
 
         {/* صفحه لاگین */}
         <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
@@ -44,7 +45,7 @@ export default function App() {
         />
 
         {/* مسیرهای ناشناخته → هدایت به صفحه اصلی */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   )
