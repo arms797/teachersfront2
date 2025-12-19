@@ -6,6 +6,8 @@ import { useUser } from '../../../context/UserContext.jsx'
 import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
 import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
 import logo from '../../../assets/logo.svg'
+//import pdf from '../../../assets/frm.pdf'
+//import word from '../../../assets/frm.docx'
 
 export default function TeacherSchedule({ code, term, onClose }) {
     const [data, setData] = useState(null)
@@ -408,11 +410,18 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         <p className={termForm?.isNeighborTeaching ? "text-success" : "text-muted"}>
                                             در صورتی که نیاز به تدریس در مراکز همجوار دارید، لازم است فرم مربوط به مجوز تدریس در مراکز همجوار را تکمیل نموده و مراحل اداری لازم را طی نمایید.                                    </p>
                                         <a
-                                            href="/files/neighbor-teaching-guide.pdf"
+                                            href="/frm.pdf"
                                             className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
                                             download
                                         >
-                                            دریافت فرم
+                                           pdf دریافت فرم
+                                        </a>
+                                        <a
+                                            href="/frm.docx"
+                                            className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
+                                            download
+                                        >
+                                           word دریافت فرم
                                         </a>
                                     </div>
 
