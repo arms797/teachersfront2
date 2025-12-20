@@ -18,6 +18,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const { hasRole } = useUser()
     const [termForm, setTermForm] = useState(null)
     const canEditTerm = hasRole('admin') || hasRole('teacher') || hasRole('centerAdmin')
+    const [email, setEmail] = useState(null)
 
     useEffect(() => {
         async function fetchData() {
@@ -26,6 +27,9 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 //console.log(res)
                 setData(res)
                 setTermForm(res.termInfo)
+                const resmail = await api.get(`/api/teachers/teachersEmail/${code}`)
+                setEmail(resmail.email)
+                console.log(resmail)
             } catch (err) {
                 console.error('خطا در دریافت اطلاعات برنامه هفتگی:', err)
             } finally {
@@ -89,6 +93,33 @@ export default function TeacherSchedule({ code, term, onClose }) {
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹']
         return str.toString().replace(/\d/g, d => persianDigits[d])
     }
+    const handleClose = () => {
+        // فقط اگر مدرس مدعو نبود
+        if (!isFaculty) {
+            let errors = []
+
+            if (researchHours > 10) {
+                errors.push('❌ کل ساعات پژوهشی نباید بیشتر از 10 ساعت باشد.')
+            }
+            if (researchInOfficeHours > 6) {
+                errors.push('❌ ساعات پژوهشی در ساعات اداری نباید بیشتر از 6 ساعت باشد.')
+            }
+            if (workHours < 40) {
+                errors.push('❌ ساعات کاری اعلام شده نباید کمتر از 40 ساعت باشد.')
+            }
+
+            if (errors.length > 0) {
+                let initError = []
+                initError.push('لطفا نسبت به رفع خطاهای زیر اقدام نمایید')
+                initError.push(errors)
+                alert(initError.join('\n'))
+            }
+        }
+
+        // در هر صورت در نهایت بسته شود
+        onClose()
+    }
+
 
     function handlePrintView(teacher, schedule, centers) {
         const win = window.open('', '_blank')
@@ -245,7 +276,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 <div className="container py-4 ">
                     <div className="schedule-inner">
                         <div className="d-flex justify-content-between align-items-center mb-4">
-                            <button className="btn btn-outline-danger me-2" onClick={onClose}>بستن</button>
+                            <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                             <div className="w-100 text-center mb-4">
                                 <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
 
@@ -262,7 +293,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                 📄برنامه هفتگی قابل چاپ
                             </button>
 
-                            <button className="btn btn-outline-danger me-2" onClick={onClose}>بستن</button>
+                            <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                         </div>
 
                         {/* اطلاعات استاد */}
@@ -349,7 +380,11 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                                     {(hasRole('admin') || hasRole('centerAdmin') || hasRole('teacher')) && (
                                                         <button
                                                             className="btn btn-sm btn-outline-primary"
-                                                            onClick={() => setEditItem({ ...ws, cooperationType: data.teacher.cooperationType })}
+                                                            onClick={() => setEditItem({
+                                                                ...ws,
+                                                                cooperationType: data.teacher.cooperationType,
+                                                                email: email
+                                                            })}
                                                         >
                                                             ✏️ ویرایش
                                                         </button>
@@ -414,14 +449,14 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                             className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
                                             download
                                         >
-                                           pdf دریافت فرم
+                                            pdf دریافت فرم
                                         </a>
                                         <a
                                             href="/frm.docx"
                                             className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
                                             download
                                         >
-                                           word دریافت فرم
+                                            word دریافت فرم
                                         </a>
                                     </div>
 
@@ -536,13 +571,22 @@ export default function TeacherSchedule({ code, term, onClose }) {
                             term={term}
                             onClose={() => setEditItem(null)}
                             onSave={(updated) => {
+                                // آپدیت لیست برنامه هفتگی
                                 const updatedList = data.weeklySchedule.map(w =>
                                     w.id === updated.id ? { ...w, ...updated } : w
                                 )
+
+                                // آپدیت state اصلی
                                 setData(prev => ({ ...prev, weeklySchedule: updatedList }))
+
+                                // اگر ایمیل جدید پاس داده شده بود، state ایمیل را هم آپدیت کن
+                                if (updated.email) {
+                                    setEmail(updated.email)
+                                }
                             }}
                         />
                     )}
+
                 </div>
             </div>
         </PersianDigitsProvider >

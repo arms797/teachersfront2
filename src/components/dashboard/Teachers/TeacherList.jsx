@@ -38,10 +38,10 @@ export default function TeacherList() {
                 params: {
                     page,
                     pageSize,
-                    search: searchTerm,
+                    search: normalizePersian(searchTerm),
                     cooperationType,
-                    center,
-                    fieldOfStudy
+                    center: normalizePersian(center),
+                    fieldOfStudy: normalizePersian(fieldOfStudy)
                 }
             })
             setTeachers(res.items)
@@ -50,7 +50,13 @@ export default function TeacherList() {
             console.error('خطا در دریافت لیست صفحه‌بندی‌شده:', err)
         }
     }
-
+    function normalizePersian(str) {
+        return (str || '')
+            .replace(/ي/g, 'ی')
+            .replace(/ك/g, 'ک')
+            .replace(/\s+/g, ' ')
+            .trim()
+    }
     function handleDelete(id) {
         if (!window.confirm('آیا از حذف مطمئن هستید؟')) return
         if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
@@ -204,21 +210,81 @@ export default function TeacherList() {
                 </div>
 
                 {/* صفحه‌بندی */}
+                {/* صفحه‌بندی بهینه */}
+                {/* صفحه‌بندی بهینه */}
                 <nav className="mt-3">
-                    <ul className="pagination justify-content-center">
-                        {Array.from({ length: totalPages }, (_, i) => (
-                            <li key={i} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => setPage(i + 1)}>
-                                    {i + 1}
-                                </button>
-                            </li>
-                        ))}
+                    <ul className="pagination justify-content-center flex-wrap">
+                        {/* قبلی */}
+                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => setPage(page - 1)}>قبلی</button>
+                        </li>
+
+                        {(() => {
+                            const maxVisible = 5
+                            let start = Math.max(1, page - Math.floor(maxVisible / 2))
+                            let end = Math.min(totalPages, start + maxVisible - 1)
+
+                            if (end - start + 1 < maxVisible) {
+                                start = Math.max(1, end - maxVisible + 1)
+                            }
+
+                            const nodes = []
+
+                            // صفحه اول + سه‌نقطه
+                            if (start > 1) {
+                                nodes.push(
+                                    <li key="first" className="page-item">
+                                        <button className="page-link" onClick={() => setPage(1)}>1</button>
+                                    </li>
+                                )
+                                if (start > 2) {
+                                    nodes.push(
+                                        <li key="start-ellipsis" className="page-item disabled">
+                                            <span className="page-link">...</span>
+                                        </li>
+                                    )
+                                }
+                            }
+
+                            // صفحات میانی
+                            for (let i = start; i <= end; i++) {
+                                nodes.push(
+                                    <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
+                                        <button className="page-link" onClick={() => setPage(i)}>{i}</button>
+                                    </li>
+                                )
+                            }
+
+                            // سه‌نقطه + صفحه آخر
+                            if (end < totalPages) {
+                                if (end < totalPages - 1) {
+                                    nodes.push(
+                                        <li key="end-ellipsis" className="page-item disabled">
+                                            <span className="page-link">...</span>
+                                        </li>
+                                    )
+                                }
+                                nodes.push(
+                                    <li key="last" className="page-item">
+                                        <button className="page-link" onClick={() => setPage(totalPages)}>{totalPages}</button>
+                                    </li>
+                                )
+                            }
+
+                            return nodes
+                        })()}
+
+                        {/* بعدی */}
+                        <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => setPage(page + 1)}>بعدی</button>
+                        </li>
                     </ul>
                 </nav>
+
             </div>
             {/*مودال های استاد جدید و ویرایش استاد */}
             {showModal && (
-                <div className="modal fade show d-block"  tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered" >
                         <div className="modal-content" >
                             <div className="modal-header">
@@ -262,6 +328,7 @@ export default function TeacherList() {
                 <TeacherSchedule
                     code={scheduleCode}
                     term={activeTerm}
+                    //email={email}
                     onClose={() => setScheduleCode(null)}
                 />
             )}
