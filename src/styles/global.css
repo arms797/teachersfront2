@@ -135,15 +135,7 @@ body {
 }
 
 
-.fullscreen-overlay {
-  position: fixed;
-  inset: 0;
-  background: #fff;
-  z-index: 2000;
-  overflow-x: auto;   /* اسکرول افقی */
-  overflow-y: auto;   /* اسکرول عمودی */
-  -webkit-overflow-scrolling: touch;
-}
+
 
 /* حالت استاد: عرض کنترل‌شده */
 .teacher-view .schedule-inner {

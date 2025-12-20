@@ -272,7 +272,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                     <div className="modal-content">
                         <div className="modal-body">
                             <div className="container-fluid py-4 ">
-                                <div className="schedule-inner">
+                                <div>
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                                         <div className="w-100 text-center mb-4">
