@@ -19,6 +19,7 @@ const ComponentFeaturesManager = lazy(() => import('../components/dashboard/Mana
 const ExamSeatManage = lazy(() => import('../components/dashboard/ManageHome/ExamSeatManage.jsx'))
 const WeeklyChangesReport = lazy(() => import('../components/dashboard/Reports/WeeklyChangesReport.jsx'))
 const DailyTeachers = lazy(() => import('../components/dashboard/Reports/DailyTeachers.jsx'))
+const NormalizeTeachersButton = lazy(() => import('../components/dashboard/Teachers/NormalizeTeachers.jsx'))
 
 
 export default function DashboardContent({ onLogout }) {
@@ -104,6 +105,12 @@ export default function DashboardContent({ onLogout }) {
                 return (
                     <Suspense fallback={<div>در حال بارگذاری سرترم...</div>}>
                         {hasRole('admin') ? <SartermCreator /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'normalize':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری ...</div>}>
+                        {hasRole('admin') ? <NormalizeTeachersButton /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'changePassword':

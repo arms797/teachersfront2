@@ -13,16 +13,17 @@ export default function DailyTeachers() {
         loading: termsLoading,
     } = useTerms();
 
-    // پیش‌فرض مرکز شیراز؛ اگر کد دیگری برای شیراز داری، همین را جایگزین کن
     const [centerCode, setCenterCode] = useState("6293");
     const [dayOfWeek, setDayOfWeek] = useState("");
     const [cooperationType, setCooperationType] = useState("عضو هیات علمی");
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    // متن توضیحی فقط پس از جستجو تغییر کند
     const [searchInfo, setSearchInfo] = useState(null);
+
+    // صفحه‌بندی
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 30; // تعداد رکورد در هر صفحه
 
     const days = [
         "شنبه",
@@ -46,16 +47,11 @@ export default function DailyTeachers() {
                 `/api/reports/TeachersByCenterDay/${selectedTerm}/${centerCode}/${dayOfWeek}/${cooperationType}`
             );
             setResults(Array.isArray(data) ? data : []);
+            setCurrentPage(1); // بعد از هر جستجو برگرد به صفحه اول
 
-            // ذخیره شرایط جستجو برای متن توضیحی
             const centerTitle =
-                centers.find((c) => String(c.centerCode) === String(centerCode))?.title ||
-                "";
-            setSearchInfo({
-                cooperationType,
-                centerTitle,
-                dayOfWeek,
-            });
+                centers.find((c) => String(c.centerCode) === String(centerCode))?.title || "";
+            setSearchInfo({ cooperationType, centerTitle, dayOfWeek });
         } catch (err) {
             console.error(err);
             setError("در دریافت نتایج مشکلی رخ داد");
@@ -63,6 +59,11 @@ export default function DailyTeachers() {
             setLoading(false);
         }
     }
+
+    // محاسبه رکوردهای صفحه جاری
+    const totalPages = Math.ceil(results.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const currentResults = results.slice(startIndex, startIndex + pageSize);
 
     return (
         <div className="container mt-4" dir="rtl">
@@ -124,37 +125,40 @@ export default function DailyTeachers() {
 
                 {/* نوع همکاری */}
                 <div className="col-md-3">
-                    <label className="form-label">نوع همکاری</label>
-                    <div className="form-check">
-                        <input
-                            className="form-check-input"
-                            type="radio"
-                            id="faculty"
-                            name="cooperationType"
-                            value="عضو هیات علمی"
-                            checked={cooperationType === "عضو هیات علمی"}
-                            onChange={(e) => setCooperationType(e.target.value)}
-                        />
-                        <label className="form-check-label ms-2" htmlFor="faculty">
-                            عضو هیات علمی
-                        </label>
-                    </div>
+                    <label className="form-label d-block mb-2">نوع همکاری</label>
+                    <div className="d-flex">
+                        <div className="form-check me-3">
+                            <input
+                                className="form-check-input"
+                                type="radio"
+                                id="faculty"
+                                name="cooperationType"
+                                value="عضو هیات علمی"
+                                checked={cooperationType === "عضو هیات علمی"}
+                                onChange={(e) => setCooperationType(e.target.value)}
+                            />
+                            <label className="form-check-label" htmlFor="faculty">
+                                عضو هیات علمی
+                            </label>
+                        </div>
 
-                    <div className="form-check">
-                        <input
-                            className="form-check-input"
-                            type="radio"
-                            id="guest"
-                            name="cooperationType"
-                            value="مدرس مدعو"
-                            checked={cooperationType === "مدرس مدعو"}
-                            onChange={(e) => setCooperationType(e.target.value)}
-                        />
-                        <label className="form-check-label ms-2" htmlFor="guest">
-                            مدرس مدعو
-                        </label>
+                        <div className="form-check">
+                            <input
+                                className="form-check-input"
+                                type="radio"
+                                id="guest"
+                                name="cooperationType"
+                                value="مدرس مدعو"
+                                checked={cooperationType === "مدرس مدعو"}
+                                onChange={(e) => setCooperationType(e.target.value)}
+                            />
+                            <label className="form-check-label" htmlFor="guest">
+                                مدرس مدعو
+                            </label>
+                        </div>
                     </div>
                 </div>
+
             </div>
 
             {/* دکمه جستجو */}
@@ -164,16 +168,14 @@ export default function DailyTeachers() {
                 </button>
             </div>
 
-            {/* نمایش وضعیت */}
             {loading && <p>در حال بارگذاری...</p>}
             {error && <div className="alert alert-danger">{error}</div>}
 
-            {/* متن توضیحی و جدول نتایج فقط پس از جستجو */}
-            {results.length > 0 && searchInfo && (
+            {currentResults.length > 0 && searchInfo && (
                 <>
                     <h5 className="mb-3">
-                        لیست حضور اساتید  {searchInfo.cooperationType} {" "}
-                        {searchInfo.centerTitle} در روز {searchInfo.dayOfWeek}
+                        لیست حضور اساتید {searchInfo.cooperationType} {searchInfo.centerTitle} در روز{" "}
+                        {searchInfo.dayOfWeek}
                     </h5>
 
                     <table className="table table-striped table-bordered mt-3">
@@ -191,7 +193,7 @@ export default function DailyTeachers() {
                             </tr>
                         </thead>
                         <tbody>
-                            {results.map((r) => (
+                            {currentResults.map((r) => (
                                 <tr key={r.code || `${r.fname}-${r.mobile}`}>
                                     <td>{r.code}</td>
                                     <td>{r.fname}</td>
@@ -206,8 +208,60 @@ export default function DailyTeachers() {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* صفحه‌بندی بهینه */}
+                    <nav>
+                        <ul className="pagination justify-content-center">
+                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                <button
+                                    className="page-link"
+                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    قبلی
+                                </button>
+                            </li>
+
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(
+                                    (page) =>
+                                        page === 1 ||
+                                        page === totalPages ||
+                                        (page >= currentPage - 2 && page <= currentPage + 2)
+                                )
+                                .map((page, idx, arr) => {
+                                    const prevPage = arr[idx - 1];
+                                    const showDots = prevPage && page - prevPage > 1;
+                                    return (
+                                        <React.Fragment key={page}>
+                                            {showDots && (
+                                                <li className="page-item disabled">
+                                                    <span className="page-link">…</span>
+                                                </li>
+                                            )}
+                                            <li className={`page-item ${currentPage === page ? "active" : ""}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(page)}>
+                                                    {page}
+                                                </button>
+                                            </li>
+                                        </React.Fragment>
+                                    );
+                                })}
+
+                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                <button
+                                    className="page-link"
+                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    بعدی
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
                 </>
             )}
         </div>
     );
 }
+``

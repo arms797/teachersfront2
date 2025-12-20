@@ -148,22 +148,61 @@ const RptTeachersList = ({ term, cooperationType, completed }) => {
 
                     {/* صفحه‌بندی */}
                     <nav>
-                        <ul className="pagination">
-                            {Array.from({ length: totalPages }, (_, i) => (
-                                <li
-                                    key={i}
-                                    className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                        <ul className="pagination justify-content-center">
+                            {/* دکمه قبلی */}
+                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                <button
+                                    className="page-link"
+                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
                                 >
-                                    <button
-                                        className="page-link"
-                                        onClick={() => setCurrentPage(i + 1)}
-                                    >
-                                        {i + 1}
-                                    </button>
-                                </li>
-                            ))}
+                                    قبلی
+                                </button>
+                            </li>
+
+                            {/* شماره صفحات با ... */}
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(
+                                    (page) =>
+                                        page === 1 ||
+                                        page === totalPages ||
+                                        (page >= currentPage - 2 && page <= currentPage + 2)
+                                )
+                                .map((page, idx, arr) => {
+                                    const prevPage = arr[idx - 1];
+                                    const showDots = prevPage && page - prevPage > 1;
+                                    return (
+                                        <React.Fragment key={page}>
+                                            {showDots && (
+                                                <li className="page-item disabled">
+                                                    <span className="page-link">…</span>
+                                                </li>
+                                            )}
+                                            <li className={`page-item ${currentPage === page ? "active" : ""}`}>
+                                                <button
+                                                    className="page-link"
+                                                    onClick={() => setCurrentPage(page)}
+                                                >
+                                                    {page}
+                                                </button>
+                                            </li>
+                                        </React.Fragment>
+                                    );
+                                })}
+
+                            {/* دکمه بعدی */}
+                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                <button
+                                    className="page-link"
+                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    بعدی
+                                </button>
+                            </li>
                         </ul>
                     </nav>
+
                 </>
             )}
 

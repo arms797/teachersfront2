@@ -38,10 +38,10 @@ export default function TeacherList() {
                 params: {
                     page,
                     pageSize,
-                    search: normalizePersian(searchTerm),
+                    search: searchTerm,
                     cooperationType,
-                    center: normalizePersian(center),
-                    fieldOfStudy: normalizePersian(fieldOfStudy)
+                    center,
+                    fieldOfStudy
                 }
             })
             setTeachers(res.items)
@@ -50,13 +50,7 @@ export default function TeacherList() {
             console.error('خطا در دریافت لیست صفحه‌بندی‌شده:', err)
         }
     }
-    function normalizePersian(str) {
-        return (str || '')
-            .replace(/ي/g, 'ی')
-            .replace(/ك/g, 'ک')
-            .replace(/\s+/g, ' ')
-            .trim()
-    }
+
     function handleDelete(id) {
         if (!window.confirm('آیا از حذف مطمئن هستید؟')) return
         if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
@@ -64,13 +58,8 @@ export default function TeacherList() {
     }
     function handleResetPass(id) {
         if (!window.confirm('آیا از بازیابی رمز عبور مطمئن هستید؟')) return
-        //if (!window.confirm('با حذف استاد اطلاعات دیگر این استاد نیز حذف خواهد شد . آیا مطمئنید ؟')) return
         api.post(`/api/teachers/${id}/reset-password`).then(() => fetchTeachers())
     }
-
-    //function handleWeeklySchedule(code) {
-    //    alert(`نمایش برنامه هفتگی برای استاد با کد: ${code}`)
-    //}
 
     return (
         <div className="card">
@@ -208,13 +197,9 @@ export default function TeacherList() {
 
                     </table>
                 </div>
-
-                {/* صفحه‌بندی */}
-                {/* صفحه‌بندی بهینه */}
                 {/* صفحه‌بندی بهینه */}
                 <nav className="mt-3">
                     <ul className="pagination justify-content-center flex-wrap">
-                        {/* قبلی */}
                         <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                             <button className="page-link" onClick={() => setPage(page - 1)}>قبلی</button>
                         </li>
@@ -229,7 +214,6 @@ export default function TeacherList() {
                             }
 
                             const nodes = []
-
                             // صفحه اول + سه‌نقطه
                             if (start > 1) {
                                 nodes.push(
@@ -245,7 +229,6 @@ export default function TeacherList() {
                                     )
                                 }
                             }
-
                             // صفحات میانی
                             for (let i = start; i <= end; i++) {
                                 nodes.push(

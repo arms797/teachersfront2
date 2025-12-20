@@ -114,6 +114,10 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                   <i className="fa fa-id-badge"></i>
                   <span>نقش‌ها</span>
                 </div>
+                <div className="nav-item" onClick={() => onSelectPage('normalize')}>
+                  <i className="fa fa-id-badge"></i>
+                  <span>نرمالسازی حروف فارسی</span>
+                </div>
               </div>
             )}
           </div>
