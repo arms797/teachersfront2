@@ -170,15 +170,17 @@ export default function TeacherList() {
                                             <button className="btn btn-sm btn-outline-success" onClick={() => setScheduleCode(t.code)}>
                                                 📅 برنامه حضور هفتگی
                                             </button>
-                                            <button
-                                                className="btn btn-sm btn-outline-primary"
-                                                onClick={() => {
-                                                    setSelectedTeacher(t)
-                                                    setEditModal(true)
-                                                }}
-                                            >
-                                                ✏️ ویرایش
-                                            </button>
+                                            {(hasRole('admin') || hasRole('centerAdmin')) && (
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={() => {
+                                                        setSelectedTeacher(t)
+                                                        setEditModal(true)
+                                                    }}
+                                                >
+                                                    ✏️ ویرایش
+                                                </button>
+                                            )}
                                             {(hasRole('admin') || hasRole('centerAdmin')) && (
                                                 <button className="btn btn-sm btn-outline-info" onClick={() => handleResetPass(t.id)}>
                                                     بازیابی رمز عبور

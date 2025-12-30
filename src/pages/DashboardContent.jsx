@@ -20,6 +20,7 @@ const ExamSeatManage = lazy(() => import('../components/dashboard/ManageHome/Exa
 const WeeklyChangesReport = lazy(() => import('../components/dashboard/Reports/WeeklyChangesReport.jsx'))
 const DailyTeachers = lazy(() => import('../components/dashboard/Reports/DailyTeachers.jsx'))
 const NormalizeTeachersButton = lazy(() => import('../components/dashboard/Teachers/NormalizeTeachers.jsx'))
+const TeachersSummary = lazy(() => import('../components/dashboard/Reports/RptTeachersSummary.jsx'))
 
 
 export default function DashboardContent({ onLogout }) {
@@ -84,15 +85,22 @@ export default function DashboardContent({ onLogout }) {
             case 'rptFormCompletion':
                 return (
                     <Suspense fallback={<div>در حال بارگذاری گزارش ...</div>}>
-                        {hasRole('admin') || hasRole('centerAdmin')
+                        {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
                             ? <WeeklyChangesReport /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'rptDaily':
                 return (
                     <Suspense fallback={<div>در حال بارگذاری گزارش هفتگی...</div>}>
-                        {hasRole('admin') || hasRole('centerAdmin')
+                        {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
                             ? <DailyTeachers /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'TeachersSummary':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری گزارش خلاصه وضعیت اساتید...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
+                            ? <TeachersSummary /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'termCalender':

@@ -50,6 +50,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                   <i className="fa fa-user"></i>
                   <span>لیست اساتید</span>
                 </div>
+
                 <div className="nav-item" onClick={() => onSelectPage('rptFormCompletion')}>
                   <i className="fa fa-file-alt"></i>
                   <span>گزارش تکمیل فرم برنامه هفتگی</span>
@@ -57,6 +58,10 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                 <div className="nav-item" onClick={() => onSelectPage('rptDaily')}>
                   <i className="fa fa-file-alt"></i>
                   <span> گزارش برنامه روزانه اساتید</span>
+                </div>
+                <div className="nav-item" onClick={() => onSelectPage('TeachersSummary')}>
+                  <i className="fa fa-file-alt"></i>
+                  <span>گزارش خلاصه وضعیت اساتید</span>
                 </div>
               </div>
             )}

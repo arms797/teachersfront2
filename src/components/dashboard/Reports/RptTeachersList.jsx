@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../../utils/apiClient";
 import TeacherChangesModal from "./TeacherChangesModal"; // ایمپورت مودال
+import { useUser } from "../../../context/UserContext"; // ایمپورت کانتکست
 
 const RptTeachersList = ({ term, cooperationType, completed }) => {
     const [teachers, setTeachers] = useState([]);
@@ -18,6 +19,9 @@ const RptTeachersList = ({ term, cooperationType, completed }) => {
 
     // state جستجو
     const [searchTerm, setSearchTerm] = useState("");
+
+    // گرفتن نقش کاربر از کانتکست
+    const { hasRole, loading: userLoading } = useUser();
 
     useEffect(() => {
         const fetchTeachers = async () => {
@@ -137,6 +141,7 @@ const RptTeachersList = ({ term, cooperationType, completed }) => {
                                         <button
                                             className="btn btn-sm btn-info"
                                             onClick={() => handleOpenModal(t)}
+                                            disabled={!(hasRole("admin") || hasRole("centerAdmin"))}
                                         >
                                             مشاهده تغییرات
                                         </button>
