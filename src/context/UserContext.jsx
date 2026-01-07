@@ -17,7 +17,12 @@ export function UserProvider({ children }) {
                 //console.log("اطلاعات کاربر:", user)
                 if (user && user.roles) {
                     setUserRoles(user.roles.map(r => r.toLowerCase()))
-                    setUserInfo({ id: user.id, username: user.username })
+                    setUserInfo({
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.fullName,
+                        centerCode: user.centerCode
+                    })
                 } else {
                     setUserRoles([])
                     setUserInfo(null)

@@ -29,6 +29,8 @@ export default function DashboardContent({ onLogout }) {
     const [message, setMessage] = useState(null)
     const [sidebarVisible, setSidebarVisible] = useState(true)
     const user = useUser()
+    const { userInfo } = useUser()
+
 
     if (!user || user.loading) {
         return <div className="text-center mt-5">در حال بارگذاری اطلاعات کاربر...</div>
@@ -156,7 +158,7 @@ export default function DashboardContent({ onLogout }) {
                 return (
                     <div className="card">
                         <div className="card-body">
-                            <h6 className="card-title">خوش آمدید</h6>
+                            <h6 className="card-title">{userInfo.fullName} خوش آمدید </h6>
                             <p className="text-muted m-0">
                                 از منوی سمت راست یک بخش را انتخاب کنید تا محتوای آن در اینجا نمایش داده شود.
                             </p>

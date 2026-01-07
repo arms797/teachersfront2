@@ -47,6 +47,7 @@ const TeacherChangesModal = ({ show, onClose, term, teacherCode, teacherName }) 
                             <table className="table table-sm table-bordered table-striped">
                                 <thead className="table-light">
                                     <tr>
+                                        <th>روز هفته</th>
                                         <th>ستون تغییر یافته</th>
                                         <th>مقدار قبلی</th>
                                         <th>مقدار جدید</th>
@@ -57,6 +58,7 @@ const TeacherChangesModal = ({ show, onClose, term, teacherCode, teacherName }) 
                                 <tbody>
                                     {changes.map((ch) => (
                                         <tr key={ch.id}>
+                                            <td>{ch.dayOfWeek}</td>
                                             <td>{ch.columnName}</td>
                                             <td>{ch.oldValue}</td>
                                             <td>{ch.newValue}</td>
