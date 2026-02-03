@@ -31,7 +31,7 @@ export default function EditScheduleModal({ item, term, onClose, onSave }) {
     const isFaculty = cooperation.includes('مدرس') && cooperation.includes('مدعو')
     const baseOptions = isFaculty
         ? ['امکان تدریس در دانشگاه', 'عدم حضور در دانشگاه']
-        : ['حضور در مرکز', 'تدریس حضوری', 'تدریس الکترونیک', 'فعالیت پژوهشی', 'عدم حضور در دانشگاه']
+        : ['حضور در مرکز', 'تدریس حضوری', 'تدریس الکترونیک', 'فعالیت پژوهشی', 'عدم حضور در دانشگاه','مشاوره دانشجویی']
 
     const getSlotOptions = (currentValue) => {
         const normalized = normalizePersian(currentValue)

@@ -37,12 +37,12 @@ export default function AddTeacherForm({ onSuccess }) {
         }
 
         try {
-            console.log('📦 داده ارسالی به سرور:', JSON.stringify(form, null, 2))
+            //console.log('📦 داده ارسالی به سرور:', JSON.stringify(form, null, 2))
             await api.post('/api/teachers', form)
             onSuccess()
         } catch (err) {
             alert('خطا در ثبت استاد')
-            console.error(err)
+            //console.error(err)
         }
     }
 

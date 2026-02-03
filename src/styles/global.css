@@ -71,6 +71,9 @@ body {
 .cell-peach {
   background-color: #e0ccaa !important; /* گلبهی روشن */
 }
+.cell-orange {
+  background-color:  #d7b7df !important; /* سورمه ای روشن */
+}
 
 .sidebar {
   width: 260px;

@@ -21,6 +21,7 @@ const WeeklyChangesReport = lazy(() => import('../components/dashboard/Reports/W
 const DailyTeachers = lazy(() => import('../components/dashboard/Reports/DailyTeachers.jsx'))
 const NormalizeTeachersButton = lazy(() => import('../components/dashboard/Teachers/NormalizeTeachers.jsx'))
 const TeachersSummary = lazy(() => import('../components/dashboard/Reports/RptTeachersSummary.jsx'))
+const CooperationLockManager = lazy(() => import('../components/dashboard/Teachers/CooperationLockManager.jsx'))
 
 
 export default function DashboardContent({ onLogout }) {
@@ -103,6 +104,13 @@ export default function DashboardContent({ onLogout }) {
                     <Suspense fallback={<div>در حال بارگذاری گزارش خلاصه وضعیت اساتید...</div>}>
                         {hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer')
                             ? <TeachersSummary /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'CooperationLockManager':
+                return (
+                    <Suspense fallback={<div>در حال بارگزاری ...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin')
+                            ? <CooperationLockManager /> : <AccessDenied />}
                     </Suspense>
                 )
             case 'termCalender':

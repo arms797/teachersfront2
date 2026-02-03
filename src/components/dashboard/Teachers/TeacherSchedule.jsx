@@ -6,6 +6,7 @@ import { useUser } from '../../../context/UserContext.jsx'
 import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
 import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
 import logo from '../../../assets/logo.svg'
+import { useTerms } from '../../../context/TermContext.jsx'
 
 export default function TeacherSchedule({ code, term, onClose }) {
     const [data, setData] = useState(null)
@@ -17,6 +18,8 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const [termForm, setTermForm] = useState(null)
     const canEditTerm = hasRole('admin') || hasRole('teacher') || hasRole('centerAdmin')
     const [email, setEmail] = useState(null)
+    const { activeTerm } = useTerms()
+    const [loc, setLoc] = useState([])
 
     useEffect(() => {
         async function fetchData() {
@@ -26,7 +29,9 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 setTermForm(res.termInfo)
                 const resmail = await api.get(`/api/teachers/teachersEmail/${code}`)
                 setEmail(resmail.email)
-                console.log(resmail)
+                //console.log(resmail)
+                const resLoc = await api.get(`/api/teachers/teacherTermSchedule/${term}/${code}`)
+                setLoc(resLoc.items)
             } catch (err) {
                 console.error('خطا در دریافت اطلاعات برنامه هفتگی:', err)
             } finally {
@@ -54,6 +59,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
         if (normalized === 'عدم حضور در دانشگاه') return 'cell-gray'
         if (normalized === 'فعالیت پژوهشی') return 'cell-blue'
         if (normalized === 'حضور در مرکز') return 'cell-peach'
+        if (normalized === 'مشاوره دانشجویی') return 'cell-orange'
         return ''
     }
 
@@ -168,7 +174,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             <body>
                 <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:10px;">
                     <img src=${logo} alt="آرم دانشگاه" style="width:80px; height:auto; margin-bottom:10px;" />
-                    <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال ${toPersianDigits(4042)}</h2>
+                    <h2>فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال ${toPersianDigits(activeTerm)}</h2>
                 </div>
 
             <div class="info">
@@ -260,6 +266,9 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const absentCount = allValues.filter(v => v === 'عدم حضور در دانشگاه').length
     const absentHours = absentCount * 2
 
+    //مشاوره دانشجویی در دو روز متفاوت و 2 جلسه*2
+    
+
     // -------------------------------
     // رندر
     // -------------------------------
@@ -280,7 +289,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
 
                                             <h4 className="fw-bold text-primary">
                                                 فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال
-                                                4042
+                                                {activeTerm}
                                             </h4>
                                         </div>
                                         <button
@@ -358,6 +367,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                                         <th>ساعات جایگزین</th>
                                                         <th>ساعات ممنوع</th>
                                                         <th></th>
+                                                        <th></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -374,18 +384,26 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                                             <td>{renderTooltipCell(ws.alternativeHours)}</td>
                                                             <td>{renderTooltipCell(ws.forbiddenHours)}</td>
                                                             <td>
-                                                                {(hasRole('admin') || hasRole('centerAdmin') || hasRole('teacher')) && (
-                                                                    <button
-                                                                        className="btn btn-sm btn-outline-primary"
-                                                                        onClick={() => setEditItem({
-                                                                            ...ws,
-                                                                            cooperationType: data.teacher.cooperationType,
-                                                                            email: email
-                                                                        })}
-                                                                    >
-                                                                        ✏️ ویرایش
-                                                                    </button>
-                                                                )}
+                                                                {
+                                                                    //(hasRole('programmer'))
+                                                                    (hasRole('admin') || hasRole('centerAdmin') || hasRole('teacher')) && (
+                                                                        <button
+                                                                            className="btn btn-sm btn-outline-primary"
+                                                                            onClick={() => setEditItem({
+                                                                                ...ws,
+                                                                                cooperationType: data.teacher.cooperationType,
+                                                                                email: email
+                                                                            })}
+                                                                        >
+                                                                            ✏️ ویرایش
+                                                                        </button>
+                                                                    )
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                {
+                                                                    hasRole('programmer')
+                                                                }
                                                             </td>
                                                         </tr>
                                                     ))}
