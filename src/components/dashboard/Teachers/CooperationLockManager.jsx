@@ -39,7 +39,8 @@ const CooperationLockManager = () => {
             };
 
             const res = await api.post("/api/ScheduleLock/lock-by-cooperation", payload);
-            setMessage(`استاد قفل‌گذاری انجام شد. برای تعداد: ${res.count / 7}`);
+            //setMessage(`استاد تعداد ${res.count} قفل‌گذاری انجام شد برای تعداد ${res.teachersCount}`);
+            setMessage(`برای تعداد ${res.teachersCount} استاد ، قفل گذاری صورت گرفت`)
         } catch (err) {
             setError(err.response?.data?.message || "خطا در قفل‌گذاری");
         } finally {
@@ -61,7 +62,8 @@ const CooperationLockManager = () => {
             };
 
             const res = await api.post("/api/ScheduleLock/unlock-by-cooperation", payload);
-            setMessage(`استاد حذف قفل‌ انجام شد. برای تعداد: ${res.count / 7}`);
+            //setMessage(`استاد حذف قفل‌ انجام شد. برای تعداد: ${res.count / 7}`);
+            setMessage(`برای تعداد ${res.count / 7} استاد ، قفل باز شد`)
         } catch (err) {
             setError(err.response?.data?.message || "خطا در حذف قفل‌ها");
         } finally {
@@ -82,7 +84,7 @@ const CooperationLockManager = () => {
                         value={cooperationType}
                         onChange={(e) => setCooperationType(e.target.value)}
                     >
-                        <option value="">انتخاب کنید...</option>
+                        
                         <option value="همه اساتید">همه اساتید</option>
                         <option value="عضو هیات علمی">عضو هیات علمی</option>
                         <option value="مدرس مدعو">مدرس مدعو</option>
@@ -124,7 +126,7 @@ const CooperationLockManager = () => {
                     disabled={loading || userLoading || termLoading}
                     onClick={handleLock}
                 >
-                    قفل گروهی
+                    قفل کردن گروهی برنامه هفتگی اساتید
                 </button>
 
                 <button
@@ -132,7 +134,7 @@ const CooperationLockManager = () => {
                     disabled={loading || userLoading || termLoading}
                     onClick={handleUnlock}
                 >
-                    باز کردن گروهی
+                    باز کردن گروهی قفل برنامه هفتگی اساتید
                 </button>
             </div>
 
