@@ -14,32 +14,106 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const { centers } = useCenters()
     const [editItem, setEditItem] = useState(null)
     const weekOrder = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
-    const { hasRole } = useUser()
+    const { hasRole, userInfo } = useUser()
     const [termForm, setTermForm] = useState(null)
     const canEditTerm = hasRole('admin') || hasRole('teacher') || hasRole('centerAdmin')
     const [email, setEmail] = useState(null)
     const { activeTerm } = useTerms()
     const [loc, setLoc] = useState([])
+    const [scheduleLocks, setScheduleLocks] = useState([])
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`)
-                setData(res)
-                setTermForm(res.termInfo)
-                const resmail = await api.get(`/api/teachers/teachersEmail/${code}`)
-                setEmail(resmail.email)
-                //console.log(resmail)
-                const resLoc = await api.get(`/api/teachers/teacherTermSchedule/${term}/${code}`)
-                setLoc(resLoc.items)
+                const [scheduleResult, emailResult, locResult, locksResult] = await Promise.allSettled([
+                    api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`),
+                    api.get(`/api/teachers/teachersEmail/${code}`),
+                    api.get(`/api/teachers/teacherTermSchedule/${term}/${code}`),
+                    api.get(`/api/ScheduleLock/teacher/${code}?term=${term}`)
+                ])
+
+                // پردازش نتایج
+                if (scheduleResult.status === 'fulfilled') {
+                    setData(scheduleResult.value)
+                    setTermForm(scheduleResult.value?.termInfo || null)
+                } else {
+                    console.error('خطا در دریافت برنامه هفتگی:', scheduleResult.reason)
+                }
+
+                if (emailResult.status === 'fulfilled') {
+                    setEmail(emailResult.value?.email || null)
+                } else {
+                    console.error('خطا در دریافت ایمیل:', emailResult.reason)
+                }
+
+                if (locResult.status === 'fulfilled') {
+                    setLoc(locResult.value?.items || [])
+                } else {
+                    console.error('خطا در دریافت اطلاعات مکانی:', locResult.reason)
+                }
+
+                if (locksResult.status === 'fulfilled') {
+                    setScheduleLocks(locksResult.value || [])
+                } else {
+                    console.error('خطا در دریافت قفل‌ها:', locksResult.reason)
+                    setScheduleLocks([])
+                }
+
             } catch (err) {
-                console.error('خطا در دریافت اطلاعات برنامه هفتگی:', err)
+                console.error('خطای غیرمنتظره:', err)
             } finally {
                 setLoading(false)
             }
         }
         fetchData()
     }, [code, term])
+
+    const getLockForDay = (dayOfWeek) => {
+        return scheduleLocks.find(lock =>
+            lock.dayOfWeek === dayOfWeek &&
+            lock.teacherCode === code &&
+            lock.term === term
+        )
+    }
+
+    const handleLockDay = async (dayOfWeek) => {
+        if (!userInfo) return
+        try {
+            const lockData = {
+                teacherCode: code,
+                dayOfWeek: dayOfWeek,
+                term: term,
+                username: userInfo.username,
+                fullName: userInfo.fullName,
+                centerCode: userInfo.centerCode
+            }
+            await api.post('/api/ScheduleLock/lock', lockData)
+
+            const locksRes = await api.get(`/api/ScheduleLock/teacher/${code}?term=${term}`)
+            setScheduleLocks(locksRes || [])
+            alert(`✅ روز ${dayOfWeek} با موفقیت قفل شد.`)
+        } catch (err) {
+            alert('❌ خطا در قفل کردن روز')
+            console.error(err)
+        }
+    }
+
+    const handleUnlockDay = async (lockId) => {
+        if (!window.confirm('آیا از باز کردن این قفل اطمینان دارید؟')) return
+        try {
+            await api.delete(`/api/ScheduleLock/${lockId}`)
+            const updatedLocks = scheduleLocks.filter(lock => lock.id !== lockId)
+            setScheduleLocks(updatedLocks)
+            alert('✅ قفل با موفقیت باز شد.')
+        } catch (err) {
+            alert('❌ خطا در باز کردن قفل')
+            console.error(err)
+        }
+    }
+
+    const isCurrentUserLocker = (lock) => {
+        return lock && userInfo && lock.username === userInfo.username
+    }
 
     if (loading) return <div className="fullscreen-overlay">در حال دریافت اطلاعات...</div>
     if (!data) return <div className="fullscreen-overlay">اطلاعاتی یافت نشد</div>
@@ -89,6 +163,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
             alert('❌ خطا در ذخیره اطلاعات ترم')
         }
     }
+
     const cooperation = normalizePersian(data.teacher.cooperationType)
     const isFaculty = cooperation.includes('مدرس') && cooperation.includes('مدعو')
 
@@ -96,10 +171,31 @@ export default function TeacherSchedule({ code, term, onClose }) {
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹']
         return str.toString().replace(/\d/g, d => persianDigits[d])
     }
+
     const handleClose = () => {
-        // فقط اگر مدرس مدعو نبود
         if (!isFaculty) {
             let errors = []
+
+            const allValues = data.weeklySchedule.flatMap(ws => {
+                const vals = [ws.a, ws.b, ws.c, ws.d, ws.e].map(v => normalizePersian(v))
+                return vals
+            })
+
+            const researchCount = allValues.filter(v => v === 'فعالیت پژوهشی').length
+            const researchHours = researchCount * 2
+
+            const researchInOfficeCount = data.weeklySchedule.reduce((sum, ws) => {
+                const vals = [
+                    normalizePersian(ws.a || ''),
+                    normalizePersian(ws.b || ''),
+                    normalizePersian(ws.c || ''),
+                ]
+                return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
+            }, 0)
+            const researchInOfficeHours = researchInOfficeCount * 2
+
+            const workCount = allValues.filter(v => v !== 'عدم حضور در دانشگاه' && v !== '').length
+            const workHours = workCount * 2
 
             if (researchHours > 10) {
                 errors.push('❌ کل ساعات پژوهشی نباید بیشتر از 10 ساعت باشد.')
@@ -116,11 +212,11 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 initError.push('لطفا نسبت به رفع خطاهای زیر اقدام نمایید')
                 initError.push(errors)
                 alert(initError.join('\n'))
+                return
             }
         }
         onClose()
     }
-
 
     function handlePrintView(teacher, schedule, centers) {
         const win = window.open('', '_blank')
@@ -137,8 +233,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
         <td>${ws.e || ''}</td>
       </tr>
     `).join('')
-        //const fontAddress = '/src/assets/fonts/Vazir/Vazir-Regular.woff2'
-        //const logo = '/src/assets/logo.svg'
+
         const html = `
         <html>
             <head>
@@ -234,46 +329,6 @@ export default function TeacherSchedule({ code, term, onClose }) {
         win.document.close()
     }
 
-    // -------------------------------
-    // محاسبات جدول خلاصه برای کل هفته
-    // -------------------------------
-    const allValues = data.weeklySchedule.flatMap(ws => {
-        const vals = [ws.a, ws.b, ws.c, ws.d, ws.e].map(v => normalizePersian(v))
-        return vals
-    })
-
-    // کل ساعات پژوهشی = تعداد سلول‌های دارای "فعالیت پژوهشی" × 2
-    const researchCount = allValues.filter(v => v === 'فعالیت پژوهشی').length
-    const researchHours = researchCount * 2
-
-    // پژوهشی در ساعات اداری (A-D) = تعداد سلول‌های a,b,c,d که "فعالیت پژوهشی" هستند × 2
-    const researchInOfficeCount = data.weeklySchedule.reduce((sum, ws) => {
-        const vals = [
-            normalizePersian(ws.a || ''),
-            normalizePersian(ws.b || ''),
-            normalizePersian(ws.c || ''),
-            //normalizePersian(ws.d || ''),
-        ]
-        return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
-    }, 0)
-    const researchInOfficeHours = researchInOfficeCount * 2
-
-    // ساعات کاری اعلام‌شده (حضور، تدریس، پژوهش) = همه مقادیر به جز "عدم حضور در دانشگاه" و خالی‌ها × 2
-    const workCount = allValues.filter(v => v !== 'عدم حضور در دانشگاه' && v !== '').length
-    const workHours = workCount * 2
-
-    // ساعات عدم حضور اعلام‌شده = تعداد "عدم حضور در دانشگاه" × 2
-    const absentCount = allValues.filter(v => v === 'عدم حضور در دانشگاه').length
-    const absentHours = absentCount * 2
-
-    //مشاوره دانشجویی در دو روز متفاوت و 2 جلسه*2
-    
-
-    // -------------------------------
-    // رندر
-    // -------------------------------
-    {/*<PersianDigitsProvider>*/ }
-    {/*</PersianDigitsProvider>*/ }
     return (
         <PersianDigitsProvider>
             <div className="modal fade show" style={{ display: "block" }} role="dialog" >
@@ -302,19 +357,14 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                                     </div>
 
-                                    {/* اطلاعات استاد */}
                                     <div className="mb-4">
                                         <div className="row mb-2">
                                             <div className="col-md-3"><strong>کد استادی: {data.teacher.code}</strong></div>
                                             <div className="col-md-3"><strong>نام و نام خانوادگی: {data.teacher.fname} {data.teacher.lname}</strong></div>
-                                            <div className="col-md-3"><strong>شماره تماس: {data.teacher.mobile}</strong></div>
-                                            <div className="col-md-3">
-                                                <strong>محل خدمت:{' '}
-                                                    {centers.find(c => c.centerCode === data.teacher.center)?.title || data.teacher.center}
-                                                </strong>
-                                            </div>
+                                            <div className="col-md-3"><strong>شماره تماس: {data.teacher.mobile || '—'}</strong></div>
+                                            <div className="col-md-3"><strong>محل خدمت: {centers.find(c => c.centerCode === data.teacher.center)?.title || data.teacher.center}</strong></div>
                                         </div>
-                                        <div className="row">
+                                        <div className="row mb-2">
                                             <div className="col-md-3"><strong>رشته تحصیلی: {data.teacher.fieldOfStudy}</strong></div>
                                             <div className="col-md-3"><strong>نوع همکاری: {data.teacher.cooperationType}</strong></div>
                                             <div className="col-md-3"><strong>مرتبه علمی/مدرک: {data.teacher.academicRank}</strong></div>
@@ -322,289 +372,185 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         </div>
                                     </div>
 
-                                    {/* برنامه هفتگی */}
-                                    <div>
-                                        {data.weeklySchedule.length > 0 ? (
-                                            <table className="table table-bordered text-center align-middle">
-                                                <colgroup>
-                                                    <col />
-                                                    <col />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col style={{ width: '10%' }} />
-                                                    <col />
-                                                </colgroup>
-                                                <thead>
-                                                    <tr>
-                                                        <th>روز/ساعت</th>
-                                                        <th>مرکز</th>
-                                                        <th>
-                                                            <div>A</div>
-                                                            <div>08-10</div>
-                                                        </th>
-                                                        <th>
-                                                            <div>B</div>
-                                                            <div>10-12</div>
-                                                        </th>
-                                                        <th>
-                                                            <div>C</div>
-                                                            <div>12-14</div>
-                                                        </th>
-                                                        <th>
-                                                            <div>D</div>
-                                                            <div>14-16</div>
-                                                        </th>
-                                                        <th>
-                                                            <div>E</div>
-                                                            <div>16-18</div>
-                                                        </th>
-                                                        <th>توضیحات</th>
-                                                        <th>ساعات جایگزین</th>
-                                                        <th>ساعات ممنوع</th>
-                                                        <th></th>
-                                                        <th></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {sortedSchedule.map((ws, i) => (
-                                                        <tr key={i}>
-                                                            <td>{ws.dayOfWeek}</td>
-                                                            <td>{centers.find(c => c.centerCode === ws.center)?.title || ws.center}</td>
-                                                            <td className={getCellClass(ws.a)}>{ws.a}</td>
-                                                            <td className={getCellClass(ws.b)}>{ws.b}</td>
-                                                            <td className={getCellClass(ws.c)}>{ws.c}</td>
-                                                            <td className={getCellClass(ws.d)}>{ws.d}</td>
-                                                            <td className={getCellClass(ws.e)}>{ws.e}</td>
-                                                            <td>{renderTooltipCell(ws.description)}</td>
-                                                            <td>{renderTooltipCell(ws.alternativeHours)}</td>
-                                                            <td>{renderTooltipCell(ws.forbiddenHours)}</td>
-                                                            <td>
-                                                                {
-                                                                    //(hasRole('programmer'))
-                                                                    (hasRole('admin') || hasRole('centerAdmin') || hasRole('teacher')) && (
-                                                                        <button
-                                                                            className="btn btn-sm btn-outline-primary"
-                                                                            onClick={() => setEditItem({
-                                                                                ...ws,
-                                                                                cooperationType: data.teacher.cooperationType,
-                                                                                email: email
-                                                                            })}
-                                                                        >
-                                                                            ✏️ ویرایش
-                                                                        </button>
-                                                                    )
-                                                                }
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    hasRole('programmer')
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        ) : (
-                                            <p>برنامه‌ای ثبت نشده</p>
-                                        )}
-                                    </div>
-
-                                    {/* ردیف اول: چک‌باکس + دلایل + مراکز همجوار + پیشنهادات و نیازها */}
-                                    <div className="mt-5">
-                                        {!isFaculty && (
-                                            <div className="row mb-3">
-                                                <div className="col-md-3 d-flex align-items-start">
-                                                    <div className="form-check mt-2">
-                                                        <input
-                                                            className="form-check-input custom-checkbox"
-                                                            type="checkbox"
-                                                            checked={termForm?.isNeighborTeaching || false}
-                                                            onChange={e => canEditTerm && handleTermChange('isNeighborTeaching', e.target.checked)}
-                                                            id="chk-neighbor"
-                                                            disabled={!canEditTerm}
-                                                        />
-                                                        <label className="form-check-label" htmlFor="chk-neighbor">
-                                                            متقاضی تدریس در مراکز همجوار هستم
-                                                        </label>
-                                                    </div>
-                                                </div>
-
-                                                <div className="col-md-4">
-                                                    <label className="form-label">دلایل تدریس در مراکز همجوار</label>
-                                                    <textarea
-                                                        className="form-control"
-                                                        rows="2"
-                                                        value={termForm?.neighborTeaching || ''}
-                                                        onChange={e => canEditTerm && handleTermChange('neighborTeaching', e.target.value)}
-                                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
-                                                    />
-                                                </div>
-
-                                                <div className="col-md-4">
-                                                    <label className="form-label">مراکز همجوار که تقاضای تدریس دارم</label>
-                                                    <textarea
-                                                        className="form-control"
-                                                        rows="2"
-                                                        value={termForm?.neighborCenters || ''}
-                                                        onChange={e => canEditTerm && handleTermChange('neighborCenters', e.target.value)}
-                                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
-                                                    />
-                                                </div>
-
-                                                <div className="col-md-12 mt-3">
-                                                    <p className={termForm?.isNeighborTeaching ? "text-success" : "text-muted"}>
-                                                        در صورتی که نیاز به تدریس در مراکز همجوار دارید، لازم است فرم مربوط به مجوز تدریس در مراکز همجوار را تکمیل نموده و مراحل اداری لازم را طی نمایید.                                    </p>
-                                                    <a
-                                                        href="/frm.pdf"
-                                                        className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
-                                                        download
-                                                    >
-                                                        دریافت فرم pdf
-                                                    </a>
-                                                    <a
-                                                        href="/frm.docx"
-                                                        className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
-                                                        download
-                                                    >
-                                                        دریافت فرم word
-                                                    </a>
-                                                </div>
-
-                                            </div>
-                                        )}
-
-                                        <div className="row mb-4">
-                                            <div className="col-md-6">
-                                                <label className="form-label">پیشنهادات</label>
-                                                <textarea
-                                                    className="form-control"
-                                                    rows="2"
-                                                    value={termForm?.suggestion || ''}
-                                                    onChange={e => canEditTerm && handleTermChange('suggestion', e.target.value)}
-                                                    readOnly={!canEditTerm}
-                                                />
-                                            </div>
-
-                                            <div className="col-md-3 d-flex align-items-center">
-                                                <div className="form-check mt-4">
-                                                    <input
-                                                        className="form-check-input custom-checkbox"
-                                                        type="checkbox"
-                                                        checked={termForm?.projector || false}
-                                                        onChange={e => canEditTerm && handleTermChange('projector', e.target.checked)}
-                                                        id="chk-projector"
-                                                        disabled={!canEditTerm}
-                                                    />
-                                                    <label className="form-check-label ms-2" htmlFor="chk-projector">
-                                                        نیاز به ویدئو پروژکتور
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div className="col-md-3 d-flex align-items-center">
-                                                <div className="form-check mt-4">
-                                                    <input
-                                                        className="form-check-input custom-checkbox"
-                                                        type="checkbox"
-                                                        checked={termForm?.whiteboard2 || false}
-                                                        onChange={e => canEditTerm && handleTermChange('whiteboard2', e.target.checked)}
-                                                        id="chk-whiteboard"
-                                                        disabled={!canEditTerm}
-                                                    />
-                                                    <label className="form-check-label ms-2" htmlFor="chk-whiteboard">
-                                                        نیاز به وایت‌برد بزرگ
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-end">
-                                            {canEditTerm && (
-                                                <button className="btn btn-success" onClick={handleTermSubmit}>
-                                                    💾 ثبت تغییرات اطلاعات ترم
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* جدول خلاصه ساعات در انتها */}
-                                    <div className="mt-4">
-                                        <h6 className="fw-bold mb-2">خلاصه ساعات</h6>
-                                        <table className="table table-bordered text-center">
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered">
                                             <thead>
                                                 <tr>
-                                                    <th>نوع فعالیت</th>
-                                                    <th>حداکثر مجاز</th>
-                                                    <th>ساعات</th>
+                                                    <th>روز</th>
+                                                    <th>مرکز</th>
+                                                    <th>بازه A (۸-۱۰)</th>
+                                                    <th>بازه B (۱۰-۱۲)</th>
+                                                    <th>بازه C (۱۲-۱۴)</th>
+                                                    <th>بازه D (۱۴-۱۶)</th>
+                                                    <th>بازه E (۱۶-۱۸)</th>
+                                                    <th>اقدامات</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td>کل ساعات پژوهشی</td>
-                                                    <td>10</td>
-                                                    <td>{researchHours}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>ساعات پژوهشی در ساعات اداری</td>
-                                                    <td>6</td>
-                                                    <td
-                                                        style={{
-                                                            backgroundColor: researchInOfficeHours > 6 ? '#f8d7da' : 'transparent'
-                                                        }}
-                                                    >
-                                                        {researchInOfficeHours}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>ساعات کاری اعلام شده (شامل حضور، تدریس، پژوهش)</td>
-                                                    <td>40</td>
-                                                    <td
-                                                        style={{
-                                                            backgroundColor: workHours < 40 ? '#f8d7da' : 'transparent'
-                                                        }}
-                                                    >
-                                                        {workHours}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>ساعات عدم حضور اعلام شده</td>
-                                                    <td>-</td>
-                                                    <td>{absentHours}</td>
-                                                </tr>
+                                                {sortedSchedule.map(ws => {
+                                                    const dayLock = getLockForDay(ws.dayOfWeek)
+                                                    const locked = !!dayLock
+                                                    const isLocker = isCurrentUserLocker(dayLock)
+
+                                                    return (
+                                                        <tr key={ws.dayOfWeek}>
+                                                            <td>{ws.dayOfWeek}</td>
+                                                            <td>{ws.center}</td>
+                                                            <td className={getCellClass(ws.a)}>{renderTooltipCell(ws.a)}</td>
+                                                            <td className={getCellClass(ws.b)}>{renderTooltipCell(ws.b)}</td>
+                                                            <td className={getCellClass(ws.c)}>{renderTooltipCell(ws.c)}</td>
+                                                            <td className={getCellClass(ws.d)}>{renderTooltipCell(ws.d)}</td>
+                                                            <td className={getCellClass(ws.e)}>{renderTooltipCell(ws.e)}</td>
+                                                            <td>
+                                                                {hasRole('teacher') && (
+                                                                    <div>
+                                                                        {locked ? (
+                                                                            <div className="text-muted small">
+                                                                                <div>قفل شده</div>
+                                                                                <div>توسط: {dayLock.fullName}</div>
+                                                                                <div>مرکز: {dayLock.centerCode}</div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <button
+                                                                                className="btn btn-sm btn-primary"
+                                                                                onClick={() => setEditItem(ws)}
+                                                                            >
+                                                                                ویرایش
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+
+                                                                {hasRole('programmer') && (
+                                                                    <div>
+                                                                        {locked ? (
+                                                                            <div>
+                                                                                <div className="small text-muted">
+                                                                                    قفل توسط: {dayLock.fullName} ({dayLock.centerCode})
+                                                                                </div>
+                                                                                {isLocker && (
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-danger mt-1"
+                                                                                        onClick={() => handleUnlockDay(dayLock.id)}
+                                                                                    >
+                                                                                        🔓 باز کردن
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <button
+                                                                                className="btn btn-sm btn-warning"
+                                                                                onClick={() => handleLockDay(ws.dayOfWeek)}
+                                                                            >
+                                                                                🔒 قفل این روز
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                                {(hasRole('admin') || hasRole('centerAdmin')) && (
+                                                                    <div>
+                                                                        {locked ? (
+                                                                            <div>
+                                                                                <div className="small text-muted">
+                                                                                    قفل توسط: {dayLock.fullName} ({dayLock.centerCode})
+                                                                                </div>
+                                                                                { (
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-danger mt-1"
+                                                                                        onClick={() => handleUnlockDay(dayLock.id)}
+                                                                                    >
+                                                                                        🔓 باز کردن
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <button
+                                                                                className="btn btn-sm btn-warning"
+                                                                                onClick={() => handleLockDay(ws.dayOfWeek)}
+                                                                            >
+                                                                                🔒 قفل این روز
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    {canEditTerm && termForm && (
+                                        <div className="mt-4 p-3 border rounded">
+                                            <h5>ویرایش اطلاعات ترم</h5>
+                                            <div className="row">
+                                                <div className="col-md-3">
+                                                    <label>حداکثر ساعات هفتگی</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control"
+                                                        value={termForm.maxWeeklyHours || ''}
+                                                        onChange={(e) => handleTermChange('maxWeeklyHours', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="col-md-3">
+                                                    <label>نوع قرارداد</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={termForm.contractType || ''}
+                                                        onChange={(e) => handleTermChange('contractType', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="col-md-3">
+                                                    <label>وضعیت ترم</label>
+                                                    <select
+                                                        className="form-control"
+                                                        value={termForm.status || ''}
+                                                        onChange={(e) => handleTermChange('status', e.target.value)}
+                                                    >
+                                                        <option value="فعال">فعال</option>
+                                                        <option value="غیرفعال">غیرفعال</option>
+                                                        <option value="اتمام یافته">اتمام یافته</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-md-3 d-flex align-items-end">
+                                                    <button className="btn btn-primary w-100" onClick={handleTermSubmit}>
+                                                        ذخیره اطلاعات ترم
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-
-                                {editItem && (
-                                    <EditScheduleModal
-                                        item={editItem}
-                                        term={term}
-                                        onClose={() => setEditItem(null)}
-                                        onSave={(updated) => {
-                                            // آپدیت لیست برنامه هفتگی
-                                            const updatedList = data.weeklySchedule.map(w =>
-                                                w.id === updated.id ? { ...w, ...updated } : w
-                                            )
-                                            // آپدیت state اصلی
-                                            setData(prev => ({ ...prev, weeklySchedule: updatedList }))
-                                            // اگر ایمیل جدید پاس داده شده بود، state ایمیل را هم آپدیت کن
-                                            if (updated.email) {
-                                                setEmail(updated.email)
-                                            }
-                                        }}
-                                    />
-                                )}
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </PersianDigitsProvider >
+
+            {editItem && (
+                <EditScheduleModal
+                    item={editItem}
+                    onClose={() => setEditItem(null)}
+                    onSave={async (updatedItem) => {
+                        try {
+                            await api.put(`/api/teachers/schedule/${updatedItem.id}`, updatedItem)
+                            setData(prev => ({
+                                ...prev,
+                                weeklySchedule: prev.weeklySchedule.map(item =>
+                                    item.id === updatedItem.id ? updatedItem : item
+                                )
+                            }))
+                            setEditItem(null)
+                            alert('✅ تغییرات با موفقیت ذخیره شد')
+                        } catch (err) {
+                            alert('❌ خطا در ذخیره تغییرات')
+                        }
+                    }}
+                />
+            )}
+        </PersianDigitsProvider>
     )
 }
