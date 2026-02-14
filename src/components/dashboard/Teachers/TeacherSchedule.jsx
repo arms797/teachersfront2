@@ -19,48 +19,50 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const canEditTerm = hasRole('admin') || hasRole('teacher') || hasRole('centerAdmin')
     const [email, setEmail] = useState(null)
     const { activeTerm } = useTerms()
-    const [loc, setLoc] = useState([])
-    const [scheduleLocks, setScheduleLocks] = useState([])
+    const [locks, setLocks] = useState([])
+
+    // ✅ قفل کردن Body هنگام باز شدن مودال
+    useEffect(() => {
+        const scrollY = window.scrollY
+
+        document.body.style.overflow = 'hidden'
+        document.body.style.position = 'fixed'
+        document.body.style.top = `-${scrollY}px`
+        document.body.style.width = '100%'
+        document.body.style.left = '0'
+        document.body.style.right = '0'
+
+        return () => {
+            document.body.style.overflow = ''
+            document.body.style.position = ''
+            document.body.style.top = ''
+            document.body.style.width = ''
+            document.body.style.left = ''
+            document.body.style.right = ''
+            window.scrollTo(0, scrollY)
+        }
+    }, [])
+
+    // تابع کمکی برای دریافت نام مرکز از کد مرکز
+    const getCenterName = (centerCode) => {
+        if (!centerCode) return '—'
+        const center = centers.find(c => c.centerCode === centerCode)
+        return center?.title || centerCode
+    }
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [scheduleResult, emailResult, locResult, locksResult] = await Promise.allSettled([
-                    api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`),
-                    api.get(`/api/teachers/teachersEmail/${code}`),
-                    api.get(`/api/teachers/teacherTermSchedule/${term}/${code}`),
-                    api.get(`/api/ScheduleLock/teacher/${code}?term=${term}`)
-                ])
-
-                // پردازش نتایج
-                if (scheduleResult.status === 'fulfilled') {
-                    setData(scheduleResult.value)
-                    setTermForm(scheduleResult.value?.termInfo || null)
-                } else {
-                    console.error('خطا در دریافت برنامه هفتگی:', scheduleResult.reason)
-                }
-
-                if (emailResult.status === 'fulfilled') {
-                    setEmail(emailResult.value?.email || null)
-                } else {
-                    console.error('خطا در دریافت ایمیل:', emailResult.reason)
-                }
-
-                if (locResult.status === 'fulfilled') {
-                    setLoc(locResult.value?.items || [])
-                } else {
-                    console.error('خطا در دریافت اطلاعات مکانی:', locResult.reason)
-                }
-
-                if (locksResult.status === 'fulfilled') {
-                    setScheduleLocks(locksResult.value || [])
-                } else {
-                    console.error('خطا در دریافت قفل‌ها:', locksResult.reason)
-                    setScheduleLocks([])
-                }
-
+                setLoading(true)
+                const resLock = await api.get(`/api/ScheduleLock/${term}/${code}`)
+                setLocks(resLock || [])
+                const res = await api.get(`/api/teachers/teacherTermSchedule/${code}/${term}`)
+                setData(res)
+                setTermForm(res.termInfo)
+                const resmail = await api.get(`/api/teachers/teachersEmail/${code}`)
+                setEmail(resmail.email)
             } catch (err) {
-                console.error('خطای غیرمنتظره:', err)
+                console.error('خطا در دریافت اطلاعات برنامه هفتگی:', err)
             } finally {
                 setLoading(false)
             }
@@ -69,15 +71,24 @@ export default function TeacherSchedule({ code, term, onClose }) {
     }, [code, term])
 
     const getLockForDay = (dayOfWeek) => {
-        return scheduleLocks.find(lock =>
+        return locks.find(lock =>
             lock.dayOfWeek === dayOfWeek &&
             lock.teacherCode === code &&
             lock.term === term
         )
     }
 
-    const handleLockDay = async (dayOfWeek) => {
-        if (!userInfo) return
+    const handleLockDay = async (dayOfWeek, centerCode) => {
+        if (!userInfo) {
+            alert('❌ اطلاعات کاربر یافت نشد')
+            return
+        }
+
+        if (hasRole('programmer') && userInfo.centerCode !== centerCode) {
+            alert('❌ شما فقط می‌توانید روزهایی را قفل کنید که مرکز آن با مرکز شما مطابقت داشته باشد')
+            return
+        }
+
         try {
             const lockData = {
                 teacherCode: code,
@@ -85,34 +96,29 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 term: term,
                 username: userInfo.username,
                 fullName: userInfo.fullName,
-                centerCode: userInfo.centerCode
+                centerCode: userInfo.centerCode,
+                description: `قفل شده توسط ${userInfo.fullName}`,
+                lockedAt: new Date().toISOString()
             }
-            await api.post('/api/ScheduleLock/lock', lockData)
 
-            const locksRes = await api.get(`/api/ScheduleLock/teacher/${code}?term=${term}`)
-            setScheduleLocks(locksRes || [])
-            alert(`✅ روز ${dayOfWeek} با موفقیت قفل شد.`)
+            await api.post('/api/ScheduleLock', lockData)
+            const resLock = await api.get(`/api/ScheduleLock/${term}/${code}`)
+            setLocks(resLock || [])
         } catch (err) {
+            console.error('خطا در قفل کردن:', err)
             alert('❌ خطا در قفل کردن روز')
-            console.error(err)
         }
     }
 
-    const handleUnlockDay = async (lockId) => {
-        if (!window.confirm('آیا از باز کردن این قفل اطمینان دارید؟')) return
+    const handleUnlockDay = async (lockId, dayOfWeek) => {
         try {
             await api.delete(`/api/ScheduleLock/${lockId}`)
-            const updatedLocks = scheduleLocks.filter(lock => lock.id !== lockId)
-            setScheduleLocks(updatedLocks)
-            alert('✅ قفل با موفقیت باز شد.')
+            const resLock = await api.get(`/api/ScheduleLock/${term}/${code}`)
+            setLocks(resLock || [])
         } catch (err) {
+            console.error('خطا در باز کردن قفل:', err)
             alert('❌ خطا در باز کردن قفل')
-            console.error(err)
         }
-    }
-
-    const isCurrentUserLocker = (lock) => {
-        return lock && userInfo && lock.username === userInfo.username
     }
 
     if (loading) return <div className="fullscreen-overlay">در حال دریافت اطلاعات...</div>
@@ -175,28 +181,6 @@ export default function TeacherSchedule({ code, term, onClose }) {
     const handleClose = () => {
         if (!isFaculty) {
             let errors = []
-
-            const allValues = data.weeklySchedule.flatMap(ws => {
-                const vals = [ws.a, ws.b, ws.c, ws.d, ws.e].map(v => normalizePersian(v))
-                return vals
-            })
-
-            const researchCount = allValues.filter(v => v === 'فعالیت پژوهشی').length
-            const researchHours = researchCount * 2
-
-            const researchInOfficeCount = data.weeklySchedule.reduce((sum, ws) => {
-                const vals = [
-                    normalizePersian(ws.a || ''),
-                    normalizePersian(ws.b || ''),
-                    normalizePersian(ws.c || ''),
-                ]
-                return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
-            }, 0)
-            const researchInOfficeHours = researchInOfficeCount * 2
-
-            const workCount = allValues.filter(v => v !== 'عدم حضور در دانشگاه' && v !== '').length
-            const workHours = workCount * 2
-
             if (researchHours > 10) {
                 errors.push('❌ کل ساعات پژوهشی نباید بیشتر از 10 ساعت باشد.')
             }
@@ -212,7 +196,6 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 initError.push('لطفا نسبت به رفع خطاهای زیر اقدام نمایید')
                 initError.push(errors)
                 alert(initError.join('\n'))
-                return
             }
         }
         onClose()
@@ -329,19 +312,87 @@ export default function TeacherSchedule({ code, term, onClose }) {
         win.document.close()
     }
 
+    const allValues = data.weeklySchedule.flatMap(ws => {
+        const vals = [ws.a, ws.b, ws.c, ws.d, ws.e].map(v => normalizePersian(v))
+        return vals
+    })
+
+    const researchCount = allValues.filter(v => v === 'فعالیت پژوهشی').length
+    const researchHours = researchCount * 2
+
+    const researchInOfficeCount = data.weeklySchedule.reduce((sum, ws) => {
+        const vals = [
+            normalizePersian(ws.a || ''),
+            normalizePersian(ws.b || ''),
+            normalizePersian(ws.c || ''),
+        ]
+        return sum + vals.filter(v => v === 'فعالیت پژوهشی').length
+    }, 0)
+    const researchInOfficeHours = researchInOfficeCount * 2
+
+    const workCount = allValues.filter(v => v !== 'عدم حضور در دانشگاه' && v !== '').length
+    const workHours = workCount * 2
+
+    const absentCount = allValues.filter(v => v === 'عدم حضور در دانشگاه').length
+    const absentHours = absentCount * 2
+
     return (
         <PersianDigitsProvider>
-            <div className="modal fade show" style={{ display: "block" }} role="dialog" >
-                <div className="modal-dialog modal-fullscreen modal-dialog-scrollable" role="document">
-                    <div className="modal-content">
-                        <div className="modal-body">
-                            <div className="container-fluid py-4 ">
+            <div
+                className="modal fade show"
+                style={{
+                    display: "block",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 1050,
+                    overflow: "hidden"
+                }}
+                role="dialog"
+            >
+                <div
+                    className="modal-dialog modal-fullscreen modal-dialog-scrollable"
+                    style={{
+                        margin: 0,
+                        width: "100%",
+                        maxWidth: "100%",
+                        height: "100vh",
+                        maxHeight: "100vh",
+                        position: "relative"
+                    }}
+                    role="document"
+                >
+                    <div
+                        className="modal-content"
+                        style={{
+                            height: "100vh",
+                            maxHeight: "100vh",
+                            border: "none",
+                            borderRadius: 0,
+                            display: "flex",
+                            flexDirection: "column"
+                        }}
+                    >
+                        <div
+                            className="modal-body"
+                            style={{
+                                padding: "1rem",
+                                overflowY: "auto",
+                                overflowX: "hidden",
+                                WebkitOverflowScrolling: "touch",
+                                flex: "1 1 auto",
+                                position: "relative"
+                            }}
+                        >
+                            <div className="container-fluid py-4">
                                 <div>
-                                    <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                                         <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                                         <div className="w-100 text-center mb-4">
                                             <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
-
                                             <h4 className="fw-bold text-primary">
                                                 فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال
                                                 {activeTerm}
@@ -353,7 +404,6 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         >
                                             📄برنامه هفتگی قابل چاپ
                                         </button>
-
                                         <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                                     </div>
 
@@ -361,10 +411,14 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         <div className="row mb-2">
                                             <div className="col-md-3"><strong>کد استادی: {data.teacher.code}</strong></div>
                                             <div className="col-md-3"><strong>نام و نام خانوادگی: {data.teacher.fname} {data.teacher.lname}</strong></div>
-                                            <div className="col-md-3"><strong>شماره تماس: {data.teacher.mobile || '—'}</strong></div>
-                                            <div className="col-md-3"><strong>محل خدمت: {centers.find(c => c.centerCode === data.teacher.center)?.title || data.teacher.center}</strong></div>
+                                            <div className="col-md-3"><strong>شماره تماس: {data.teacher.mobile}</strong></div>
+                                            <div className="col-md-3">
+                                                <strong>محل خدمت:{' '}
+                                                    {getCenterName(data.teacher.center)}
+                                                </strong>
+                                            </div>
                                         </div>
-                                        <div className="row mb-2">
+                                        <div className="row">
                                             <div className="col-md-3"><strong>رشته تحصیلی: {data.teacher.fieldOfStudy}</strong></div>
                                             <div className="col-md-3"><strong>نوع همکاری: {data.teacher.cooperationType}</strong></div>
                                             <div className="col-md-3"><strong>مرتبه علمی/مدرک: {data.teacher.academicRank}</strong></div>
@@ -372,157 +426,326 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                         </div>
                                     </div>
 
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>روز</th>
-                                                    <th>مرکز</th>
-                                                    <th>بازه A (۸-۱۰)</th>
-                                                    <th>بازه B (۱۰-۱۲)</th>
-                                                    <th>بازه C (۱۲-۱۴)</th>
-                                                    <th>بازه D (۱۴-۱۶)</th>
-                                                    <th>بازه E (۱۶-۱۸)</th>
-                                                    <th>اقدامات</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {sortedSchedule.map(ws => {
-                                                    const dayLock = getLockForDay(ws.dayOfWeek)
-                                                    const locked = !!dayLock
-                                                    const isLocker = isCurrentUserLocker(dayLock)
+                                    <div className="table-responsive" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                                        {data.weeklySchedule.length > 0 ? (
+                                            <table className="table table-bordered text-center align-middle" style={{ minWidth: "1200px" }}>
+                                                <colgroup>
+                                                    <col style={{ width: '8%' }} />
+                                                    <col style={{ width: '10%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '10%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                    <col style={{ width: '9%' }} />
+                                                </colgroup>
+                                                <thead>
+                                                    <tr>
+                                                        <th>روز/ساعت</th>
+                                                        <th>مرکز</th>
+                                                        <th>A<br />08-10</th>
+                                                        <th>B<br />10-12</th>
+                                                        <th>C<br />12-14</th>
+                                                        <th>D<br />14-16</th>
+                                                        <th>E<br />16-18</th>
+                                                        <th>توضیحات</th>
+                                                        <th>ساعات جایگزین</th>
+                                                        <th>ساعات ممنوع</th>
+                                                        <th>عملیات</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sortedSchedule.map((ws, i) => {
+                                                        const dayLock = getLockForDay(ws.dayOfWeek)
+                                                        const isLocked = !!dayLock
+                                                        const isCurrentUserLocker = dayLock?.username === userInfo?.username
+                                                        const centerMatch = userInfo?.centerCode === ws.center
 
-                                                    return (
-                                                        <tr key={ws.dayOfWeek}>
-                                                            <td>{ws.dayOfWeek}</td>
-                                                            <td>{ws.center}</td>
-                                                            <td className={getCellClass(ws.a)}>{renderTooltipCell(ws.a)}</td>
-                                                            <td className={getCellClass(ws.b)}>{renderTooltipCell(ws.b)}</td>
-                                                            <td className={getCellClass(ws.c)}>{renderTooltipCell(ws.c)}</td>
-                                                            <td className={getCellClass(ws.d)}>{renderTooltipCell(ws.d)}</td>
-                                                            <td className={getCellClass(ws.e)}>{renderTooltipCell(ws.e)}</td>
-                                                            <td>
-                                                                {hasRole('teacher') && (
-                                                                    <div>
-                                                                        {locked ? (
-                                                                            <div className="text-muted small">
-                                                                                <div>قفل شده</div>
-                                                                                <div>توسط: {dayLock.fullName}</div>
-                                                                                <div>مرکز: {dayLock.centerCode}</div>
+                                                        return (
+                                                            <tr key={i}>
+                                                                <td>{ws.dayOfWeek}</td>
+                                                                <td>{getCenterName(ws.center)}</td>
+                                                                <td className={getCellClass(ws.a)}>{ws.a}</td>
+                                                                <td className={getCellClass(ws.b)}>{ws.b}</td>
+                                                                <td className={getCellClass(ws.c)}>{ws.c}</td>
+                                                                <td className={getCellClass(ws.d)}>{ws.d}</td>
+                                                                <td className={getCellClass(ws.e)}>{ws.e}</td>
+                                                                <td>{renderTooltipCell(ws.description)}</td>
+                                                                <td>{renderTooltipCell(ws.alternativeHours)}</td>
+                                                                <td>{renderTooltipCell(ws.forbiddenHours)}</td>
+                                                                <td>
+                                                                    {hasRole('teacher') && (
+                                                                        isLocked ? (
+                                                                            <div className="small text-muted">
+                                                                                <span className="badge bg-secondary mb-1">قفل شده</span>
+                                                                                <div className="small">توسط: {dayLock.fullName}</div>
+                                                                                <div className="small">{getCenterName(dayLock.centerCode)}</div>
                                                                             </div>
                                                                         ) : (
                                                                             <button
-                                                                                className="btn btn-sm btn-primary"
-                                                                                onClick={() => setEditItem(ws)}
+                                                                                className="btn btn-sm btn-outline-primary"
+                                                                                onClick={() => setEditItem({
+                                                                                    ...ws,
+                                                                                    cooperationType: data.teacher.cooperationType,
+                                                                                    email: email
+                                                                                })}
                                                                             >
-                                                                                ویرایش
+                                                                                ✏️ ویرایش
                                                                             </button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
+                                                                        )
+                                                                    )}
 
-                                                                {hasRole('programmer') && (
-                                                                    <div>
-                                                                        {locked ? (
+                                                                    {hasRole('programmer') && (
+                                                                        isLocked ? (
                                                                             <div>
                                                                                 <div className="small text-muted">
-                                                                                    قفل توسط: {dayLock.fullName} ({dayLock.centerCode})
+                                                                                    <span className="badge bg-secondary mb-1">قفل شده</span>
+                                                                                    <div className="small">توسط: {dayLock.fullName}</div>
+                                                                                    <div className="small">{getCenterName(dayLock.centerCode)}</div>
                                                                                 </div>
-                                                                                {isLocker && (
+                                                                                {isCurrentUserLocker && (
                                                                                     <button
                                                                                         className="btn btn-sm btn-outline-danger mt-1"
-                                                                                        onClick={() => handleUnlockDay(dayLock.id)}
+                                                                                        onClick={() => handleUnlockDay(dayLock.id, ws.dayOfWeek)}
                                                                                     >
-                                                                                        🔓 باز کردن
+                                                                                        🔓 باز کردن قفل
                                                                                     </button>
                                                                                 )}
                                                                             </div>
                                                                         ) : (
                                                                             <button
-                                                                                className="btn btn-sm btn-warning"
-                                                                                onClick={() => handleLockDay(ws.dayOfWeek)}
+                                                                                className={`btn btn-sm ${centerMatch ? 'btn-outline-warning' : 'btn-outline-secondary'}`}
+                                                                                onClick={() => handleLockDay(ws.dayOfWeek, ws.center)}
+                                                                                disabled={!centerMatch}
+                                                                                title={!centerMatch ? 'فقط می‌توانید روزهایی را قفل کنید که مرکز آن با مرکز شما مطابقت دارد' : ''}
                                                                             >
-                                                                                🔒 قفل این روز
+                                                                                🔒 قفل کردن
                                                                             </button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                                {(hasRole('admin') || hasRole('centerAdmin')) && (
-                                                                    <div>
-                                                                        {locked ? (
-                                                                            <div>
-                                                                                <div className="small text-muted">
-                                                                                    قفل توسط: {dayLock.fullName} ({dayLock.centerCode})
-                                                                                </div>
-                                                                                { (
+                                                                        )
+                                                                    )}
+
+                                                                    {(hasRole('centerAdmin') || hasRole('admin')) && (
+                                                                        <div className="d-flex gap-1 ">
+                                                                            {isLocked ? (
+                                                                                <>
                                                                                     <button
-                                                                                        className="btn btn-sm btn-outline-danger mt-1"
-                                                                                        onClick={() => handleUnlockDay(dayLock.id)}
+                                                                                        className="btn btn-sm btn-outline-secondary"
+                                                                                        disabled
+                                                                                        title="به دلیل قفل بودن روز، ویرایش غیرفعال است"
                                                                                     >
-                                                                                        🔓 باز کردن
+                                                                                        ✏️ ویرایش
                                                                                     </button>
-                                                                                )}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <button
-                                                                                className="btn btn-sm btn-warning"
-                                                                                onClick={() => handleLockDay(ws.dayOfWeek)}
-                                                                            >
-                                                                                🔒 قفل این روز
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    )
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                                                    <div className="small text-muted w-100">
+                                                                                        <span className="badge bg-secondary mb-1">قفل شده</span>
+                                                                                        <div className="small">توسط: {dayLock.fullName}</div>
+                                                                                        <div className="small">{getCenterName(dayLock.centerCode)}</div>
+                                                                                    </div>
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-danger"
+                                                                                        onClick={() => handleUnlockDay(dayLock.id, ws.dayOfWeek)}
+                                                                                    >
+                                                                                        🔓 باز کردن قفل
+                                                                                    </button>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-primary"
+                                                                                        onClick={() => setEditItem({
+                                                                                            ...ws,
+                                                                                            cooperationType: data.teacher.cooperationType,
+                                                                                            email: email
+                                                                                        })}
+                                                                                    >
+                                                                                        ✏️ ویرایش
+                                                                                    </button>
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-warning"
+                                                                                        onClick={() => handleLockDay(ws.dayOfWeek, ws.center)}
+                                                                                    >
+                                                                                        🔒 قفل کردن
+                                                                                    </button>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <p>برنامه‌ای ثبت نشده</p>
+                                        )}
                                     </div>
 
-                                    {canEditTerm && termForm && (
-                                        <div className="mt-4 p-3 border rounded">
-                                            <h5>ویرایش اطلاعات ترم</h5>
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <label>حداکثر ساعات هفتگی</label>
-                                                    <input
-                                                        type="number"
+                                    <div className="mt-5">
+                                        {!isFaculty && (
+                                            <div className="row mb-3">
+                                                <div className="col-md-3 d-flex align-items-start">
+                                                    <div className="form-check mt-2">
+                                                        <input
+                                                            className="form-check-input custom-checkbox"
+                                                            type="checkbox"
+                                                            checked={termForm?.isNeighborTeaching || false}
+                                                            onChange={e => canEditTerm && handleTermChange('isNeighborTeaching', e.target.checked)}
+                                                            id="chk-neighbor"
+                                                            disabled={!canEditTerm}
+                                                        />
+                                                        <label className="form-check-label" htmlFor="chk-neighbor">
+                                                            متقاضی تدریس در مراکز همجوار هستم
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label">دلایل تدریس در مراکز همجوار</label>
+                                                    <textarea
                                                         className="form-control"
-                                                        value={termForm.maxWeeklyHours || ''}
-                                                        onChange={(e) => handleTermChange('maxWeeklyHours', e.target.value)}
+                                                        rows="2"
+                                                        value={termForm?.neighborTeaching || ''}
+                                                        onChange={e => canEditTerm && handleTermChange('neighborTeaching', e.target.value)}
+                                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
                                                     />
                                                 </div>
-                                                <div className="col-md-3">
-                                                    <label>نوع قرارداد</label>
-                                                    <input
-                                                        type="text"
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label">مراکز همجوار که تقاضای تدریس دارم</label>
+                                                    <textarea
                                                         className="form-control"
-                                                        value={termForm.contractType || ''}
-                                                        onChange={(e) => handleTermChange('contractType', e.target.value)}
+                                                        rows="2"
+                                                        value={termForm?.neighborCenters || ''}
+                                                        onChange={e => canEditTerm && handleTermChange('neighborCenters', e.target.value)}
+                                                        readOnly={!canEditTerm || !termForm?.isNeighborTeaching}
                                                     />
                                                 </div>
-                                                <div className="col-md-3">
-                                                    <label>وضعیت ترم</label>
-                                                    <select
-                                                        className="form-control"
-                                                        value={termForm.status || ''}
-                                                        onChange={(e) => handleTermChange('status', e.target.value)}
+
+                                                <div className="col-md-12 mt-3">
+                                                    <p className={termForm?.isNeighborTeaching ? "text-success" : "text-muted"}>
+                                                        در صورتی که نیاز به تدریس در مراکز همجوار دارید، لازم است فرم مربوط به مجوز تدریس در مراکز همجوار را تکمیل نموده و مراحل اداری لازم را طی نمایید.
+                                                    </p>
+                                                    <a
+                                                        href="/frm.pdf"
+                                                        className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
+                                                        download
                                                     >
-                                                        <option value="فعال">فعال</option>
-                                                        <option value="غیرفعال">غیرفعال</option>
-                                                        <option value="اتمام یافته">اتمام یافته</option>
-                                                    </select>
+                                                        دریافت فرم pdf
+                                                    </a>
+                                                    <a
+                                                        href="/frm.docx"
+                                                        className={`btn btn-outline-primary ${!termForm?.isNeighborTeaching ? "disabled" : ""}`}
+                                                        download
+                                                    >
+                                                        دریافت فرم word
+                                                    </a>
                                                 </div>
-                                                <div className="col-md-3 d-flex align-items-end">
-                                                    <button className="btn btn-primary w-100" onClick={handleTermSubmit}>
-                                                        ذخیره اطلاعات ترم
-                                                    </button>
+                                            </div>
+                                        )}
+
+                                        <div className="row mb-4">
+                                            <div className="col-md-6">
+                                                <label className="form-label">پیشنهادات</label>
+                                                <textarea
+                                                    className="form-control"
+                                                    rows="2"
+                                                    value={termForm?.suggestion || ''}
+                                                    onChange={e => canEditTerm && handleTermChange('suggestion', e.target.value)}
+                                                    readOnly={!canEditTerm}
+                                                />
+                                            </div>
+
+                                            <div className="col-md-3 d-flex align-items-center">
+                                                <div className="form-check mt-4">
+                                                    <input
+                                                        className="form-check-input custom-checkbox"
+                                                        type="checkbox"
+                                                        checked={termForm?.projector || false}
+                                                        onChange={e => canEditTerm && handleTermChange('projector', e.target.checked)}
+                                                        id="chk-projector"
+                                                        disabled={!canEditTerm}
+                                                    />
+                                                    <label className="form-check-label ms-2" htmlFor="chk-projector">
+                                                        نیاز به ویدئو پروژکتور
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div className="col-md-3 d-flex align-items-center">
+                                                <div className="form-check mt-4">
+                                                    <input
+                                                        className="form-check-input custom-checkbox"
+                                                        type="checkbox"
+                                                        checked={termForm?.whiteboard2 || false}
+                                                        onChange={e => canEditTerm && handleTermChange('whiteboard2', e.target.checked)}
+                                                        id="chk-whiteboard"
+                                                        disabled={!canEditTerm}
+                                                    />
+                                                    <label className="form-check-label ms-2" htmlFor="chk-whiteboard">
+                                                        نیاز به وایت‌برد بزرگ
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
+
+                                        <div className="text-end">
+                                            {canEditTerm && (
+                                                <button className="btn btn-success" onClick={handleTermSubmit}>
+                                                    💾 ثبت تغییرات اطلاعات ترم
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <h6 className="fw-bold mb-2">خلاصه ساعات</h6>
+                                        <table className="table table-bordered text-center">
+                                            <thead>
+                                                <tr>
+                                                    <th>نوع فعالیت</th>
+                                                    <th>حداکثر مجاز</th>
+                                                    <th>ساعات</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>کل ساعات پژوهشی</td>
+                                                    <td>10</td>
+                                                    <td>{researchHours}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>ساعات پژوهشی در ساعات اداری</td>
+                                                    <td>6</td>
+                                                    <td
+                                                        style={{
+                                                            backgroundColor: researchInOfficeHours > 6 ? '#f8d7da' : 'transparent'
+                                                        }}
+                                                    >
+                                                        {researchInOfficeHours}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>ساعات کاری اعلام شده (شامل حضور، تدریس، پژوهش)</td>
+                                                    <td>40</td>
+                                                    <td
+                                                        style={{
+                                                            backgroundColor: workHours < 40 ? '#f8d7da' : 'transparent'
+                                                        }}
+                                                    >
+                                                        {workHours}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>ساعات عدم حضور اعلام شده</td>
+                                                    <td>-</td>
+                                                    <td>{absentHours}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -533,20 +756,15 @@ export default function TeacherSchedule({ code, term, onClose }) {
             {editItem && (
                 <EditScheduleModal
                     item={editItem}
+                    term={term}
                     onClose={() => setEditItem(null)}
-                    onSave={async (updatedItem) => {
-                        try {
-                            await api.put(`/api/teachers/schedule/${updatedItem.id}`, updatedItem)
-                            setData(prev => ({
-                                ...prev,
-                                weeklySchedule: prev.weeklySchedule.map(item =>
-                                    item.id === updatedItem.id ? updatedItem : item
-                                )
-                            }))
-                            setEditItem(null)
-                            alert('✅ تغییرات با موفقیت ذخیره شد')
-                        } catch (err) {
-                            alert('❌ خطا در ذخیره تغییرات')
+                    onSave={(updated) => {
+                        const updatedList = data.weeklySchedule.map(w =>
+                            w.id === updated.id ? { ...w, ...updated } : w
+                        )
+                        setData(prev => ({ ...prev, weeklySchedule: updatedList }))
+                        if (updated.email) {
+                            setEmail(updated.email)
                         }
                     }}
                 />

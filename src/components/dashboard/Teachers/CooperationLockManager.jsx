@@ -63,7 +63,7 @@ const CooperationLockManager = () => {
 
             const res = await api.post("/api/ScheduleLock/unlock-by-cooperation", payload);
             //setMessage(`استاد حذف قفل‌ انجام شد. برای تعداد: ${res.count / 7}`);
-            setMessage(`برای تعداد ${res.count / 7} استاد ، قفل باز شد`)
+            setMessage(`برای اساتید ${cooperationType}، قفل برنامه ترمی باز شد`)
         } catch (err) {
             setError(err.response?.data?.message || "خطا در حذف قفل‌ها");
         } finally {
@@ -84,7 +84,7 @@ const CooperationLockManager = () => {
                         value={cooperationType}
                         onChange={(e) => setCooperationType(e.target.value)}
                     >
-                        
+
                         <option value="همه اساتید">همه اساتید</option>
                         <option value="عضو هیات علمی">عضو هیات علمی</option>
                         <option value="مدرس مدعو">مدرس مدعو</option>
