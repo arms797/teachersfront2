@@ -259,7 +259,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 <div class="info-row">
                 <div class="info-item">کد استادی: ${toPersianDigits(teacher.code)}</div>
                 <div class="info-item">نام و نام خانوادگی: ${teacher.fname} ${teacher.lname}</div>
-                <div class="info-item">شماره تماس: ${toPersianDigits(teacher.mobile) || '—'}</div>
+                <div class="info-item">شماره تماس: --- </div>
                 <div class="info-item">محل خدمت: ${getCenterTitle(teacher.center)}</div>
                 </div>
                 <div class="info-row">
@@ -302,7 +302,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                 <tr>
                     <td style="text-align:right; font-weight:bold; border:none;">امضاء عضو علمی</td>
                     <td style="text-align:center; font-weight:bold; border:none;">امضاء مدیر گروه</td>
-                    <td style="text-align:left; font-weight:bold; border:none;">امضاء رئیس دانشگاه</td>
+                    <td style="text-align:left; font-weight:bold; border:none;">امضاء رئیس مرکز</td>
                 </tr>
             </table>
             </body>
