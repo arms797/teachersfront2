@@ -5,7 +5,7 @@ import EditScheduleModal from './EditScheduleModal.jsx'
 import { useUser } from '../../../context/UserContext.jsx'
 import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
 import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
-import logo from '../../../assets/logo.svg'
+import logo from '../../../assets/logo.jpg'
 import { useTerms } from '../../../context/TermContext.jsx'
 
 export default function TeacherSchedule({ code, term, onClose }) {
@@ -392,7 +392,7 @@ export default function TeacherSchedule({ code, term, onClose }) {
                                     <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                                         <button className="btn btn-outline-danger me-2" onClick={handleClose}>بستن</button>
                                         <div className="w-100 text-center mb-4">
-                                            <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
+                                            <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "auto", marginBottom: "5px" }} />
                                             <h4 className="fw-bold text-primary">
                                                 فرم برنامه حضور هفتگی اساتید محترم دانشگاه پیام نور استان فارس در نیمسال
                                                 {activeTerm}

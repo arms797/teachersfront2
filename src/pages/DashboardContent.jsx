@@ -3,7 +3,7 @@ import api from '../utils/apiClient.js'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext.jsx'
 import Sidebar from '../components/Sidebar.jsx'
-import logo from '../assets/logo.svg'
+import logo from '../assets/logo.jpg'
 
 
 // همه کامپوننت‌ها lazy
@@ -205,7 +205,7 @@ export default function DashboardContent({ onLogout }) {
                         </h4>
 
 
-                        <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "70px", marginBottom: "5px" }} />
+                        <img src={logo} alt="آرم دانشگاه" style={{ width: "80px", height: "auto", marginBottom: "5px" }} />
 
                     </div>
                     {message && <div className="alert alert-info">{message}</div>}
