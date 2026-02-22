@@ -5,7 +5,7 @@ import EditScheduleModal from './EditScheduleModal.jsx'
 import { useUser } from '../../../context/UserContext.jsx'
 import PersianDigitsProvider from '../../../context/PersianDigitsProvider.jsx'
 import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
-import logo from '../../../assets/logo.jpg'
+import logo from '../../../assets/logo.png'
 import { useTerms } from '../../../context/TermContext.jsx'
 
 export default function TeacherSchedule({ code, term, onClose }) {
