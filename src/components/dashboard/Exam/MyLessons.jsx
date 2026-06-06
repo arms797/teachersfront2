@@ -1,0 +1,416 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import api from '../../../utils/apiClient.js'
+import { useUser } from '../../../context/UserContext.jsx'
+
+export default function MyLessons() {
+    const { hasRole, userInfo } = useUser()
+
+    // حالت‌های صفحه‌بندی و فیلترها
+    const [exams, setExams] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(50)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalCount, setTotalCount] = useState(0)
+
+    // برای تایپ شماره صفحه
+    const [pageInputValue, setPageInputValue] = useState('1')
+
+    // برای مرتب‌سازی
+    const [sortField, setSortField] = useState(null) // فیلد مرتب‌سازی
+    const [sortOrder, setSortOrder] = useState('asc') // asc یا desc
+
+    // تابع دریافت دروس استاد (بدون فیلتر)
+    const fetchMyLessons = useCallback(async () => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams()
+            params.append('page', page)
+            params.append('pageSize', pageSize)
+
+            // جستجو بر اساس کد استاد از اطلاعات کاربر جاری
+            if (userInfo?.username) {
+                params.append('teacherCode', userInfo.username)
+            }
+
+            const res = await api.get(`/api/exams/paged?${params.toString()}`)
+
+            // مرتب‌سازی در فرانت‌اند: اول رکوردهایی که استاد جاری طراح سوال است، سپس بر اساس تاریخ
+            let sortedItems = sortExamsByPriority(res.items || [])
+
+            // اعمال مرتب‌سازی اضافی بر اساس کلیک کاربر
+            if (sortField) {
+                sortedItems = applySorting(sortedItems, sortField, sortOrder)
+            }
+
+            setExams(sortedItems)
+            setTotalCount(res.totalCount)
+            setTotalPages(res.totalPages || Math.ceil(res.totalCount / pageSize))
+            setPageInputValue(String(res.page || page))
+        } catch (err) {
+            console.error('خطا در دریافت دروس:', err)
+            alert('❌ خطا در دریافت لیست دروس')
+        } finally {
+            setLoading(false)
+        }
+    }, [page, userInfo?.username, sortField, sortOrder])
+
+    // تابع مرتب‌سازی بر اساس فیلد و جهت انتخاب شده
+    const applySorting = (items, field, order) => {
+        return [...items].sort((a, b) => {
+            let valA = a[field] || ''
+            let valB = b[field] || ''
+
+            // تبدیل به عدد برای فیلد Registered
+            if (field === 'registered') {
+                valA = parseInt(valA) || 0
+                valB = parseInt(valB) || 0
+            }
+
+            // مقایسه رشته‌ای برای سایر فیلدها
+            if (order === 'asc') {
+                return valA > valB ? 1 : valA < valB ? -1 : 0
+            } else {
+                return valA < valB ? 1 : valA > valB ? -1 : 0
+            }
+        })
+    }
+
+    // تابع مرتب‌سازی: اول رکوردهایی که استاد جاری طراح سوال است، سپس بر اساس تاریخ و ساعت
+    const sortExamsByPriority = (items) => {
+        return [...items].sort((a, b) => {
+            const aIsDesigner = isTeacherAndDesignerSame(a)
+            const bIsDesigner = isTeacherAndDesignerSame(b)
+
+            // اولویت با رکوردهایی که استاد جاری طراح سوال است
+            if (aIsDesigner && !bIsDesigner) return -1
+            if (!aIsDesigner && bIsDesigner) return 1
+
+            // اگر هر دو در یک دسته هستند، بر اساس تاریخ مرتب کن
+            const aDateValid = a.examDate && a.examDate.length >= 8
+            const bDateValid = b.examDate && b.examDate.length >= 8
+
+            if (aDateValid && !bDateValid) return -1
+            if (!aDateValid && bDateValid) return 1
+
+            if (a.examDate && b.examDate) {
+                const dateCompare = b.examDate.localeCompare(a.examDate)
+                if (dateCompare !== 0) return dateCompare
+            }
+
+            if (a.start && b.start) {
+                return a.start.localeCompare(b.start)
+            }
+
+            return 0
+        })
+    }
+
+    // تابع بررسی اینکه آیا استاد درس همان طراح سوال است
+    const isTeacherAndDesignerSame = (exam) => {
+        if (!exam.teacher || !exam.questionDesigner) return false
+        const teacherName = exam.teacher.replace(/\s+/g, ' ').trim()
+        const designerName = exam.questionDesigner.replace(/\s+/g, ' ').trim()
+        return teacherName === designerName
+    }
+
+    // تابع مدیریت کلیک روی هدر ستون
+    const handleSort = (field) => {
+        if (sortField === field) {
+            // اگر همان ستون بود، ترتیب را معکوس کن
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+        } else {
+            // اگر ستون جدید بود، مرتب‌سازی صعودی
+            setSortField(field)
+            setSortOrder('asc')
+        }
+    }
+
+    // نمایش آیکون مرتب‌سازی
+    const getSortIcon = (field) => {
+        if (sortField !== field) return <i className="fa fa-sort text-muted ms-1" style={{ fontSize: '12px' }}></i>
+        return sortOrder === 'asc'
+            ? <i className="fa fa-sort-asc text-primary ms-1" style={{ fontSize: '12px' }}></i>
+            : <i className="fa fa-sort-desc text-primary ms-1" style={{ fontSize: '12px' }}></i>
+    }
+
+    // بارگذاری با تغییر صفحه یا مرتب‌سازی
+    useEffect(() => {
+        fetchMyLessons()
+    }, [fetchMyLessons, page])
+
+    // تابع تغییر صفحه با اینتر
+    const handlePageInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            let newPage = parseInt(pageInputValue)
+            if (isNaN(newPage)) newPage = 1
+            newPage = Math.max(1, Math.min(newPage, totalPages))
+            setPage(newPage)
+        }
+    }
+
+    // تابع تغییر مقدار ورودی صفحه
+    const handlePageInputChange = (e) => {
+        const value = e.target.value
+        if (value === '' || /^\d+$/.test(value)) {
+            setPageInputValue(value)
+        }
+    }
+
+    // بررسی دسترسی (فقط استاد)
+    if (!hasRole('teacher')) {
+        return (
+            <div className="card shadow-sm">
+                <div className="card-body">
+                    <div className="alert alert-danger text-center">
+                        <i className="fa fa-ban ml-2"></i>
+                        شما مجاز به دسترسی به این بخش نیستید.
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="card shadow-sm">
+            <div className="card-body">
+                {/* ================================ */}
+                {/* متن راهنما و توضیحات */}
+                {/* ================================ */}
+                <div className="card mb-4 border-info bg-light">
+                    <div className="card-body">
+                        <div className="text-right">
+                            <p className="mb-2">
+                                <strong>استاد محترم (سرکارخانم/جناب آقای) {userInfo?.fullName || userInfo?.username}</strong>
+                            </p>
+                            <p className="mb-2">
+                                با سلام و احترام
+                            </p>
+                            <p className="mb-2">
+                                پیرو مصوبه ستاد امتحانات استان، مسئولیت طراحی سؤالات دروس مندرج در جدول ذیل به جنابعالی محول شده است.
+                                مقتضی است به‌منظور فراهم‌سازی بستر بررسی، پشتیبانی و انجام اقدامات تکمیلی، نسبت به طراحی و بارگذاری سؤالات
+                                مطابق ضوابط ابلاغی، حداکثر تا ۷۲ ساعت پیش از زمان برگزاری آزمون، در سامانه VC به نشانی <a href="http://vc.farspnu.ac.ir" target="_blank" rel="noopener noreferrer">vc.farspnu.ac.ir</a> اقدام فرمایید.
+                            </p>
+                            <p className="mb-2">
+                                همچنین در تنظیم ویژگی‌های آزمون، رعایت موارد زیر ضروری است:
+                            </p>
+                            <ul className="mb-2">
+                                <li>عنوان آزمون به‌صورت کامل درج شود (برای نمونه: «آزمون پایان‌ترم درس زبان تخصصی مدیریت»).</li>
+                                <li>تاریخ و زمان شروع آزمون مطابق با زمان‌بندی اعلام‌شده تنظیم و زمان تأخیر مجاز ورود به آزمون حداقل ۵ دقیقه تعیین شود.</li>
+                                <li>در بخش توضیحات آزمون تصریح شود که امکان بازگشت به سؤالات قبلی و اصلاح پاسخ‌ها وجود ندارد.</li>
+                                <li>گزینه‌های «نمایش نمره»، «نمایش هر سؤال در یک صفحه»، «تصادفی سازی سوالات» و «تصادفی‌سازی ترتیب گزینه‌ها» فعال و گزینه «امکان بازگشت و ویرایش پاسخ پس از ثبت» غیرفعال باشد.</li>
+                                <li>مدت پاسخ‌گویی هر سؤال متناسب با سطح دشواری و نوع آن تعیین و برای هر سؤال حداقل یک دقیقه در نظر گرفته شود.</li>
+                                <li>در طراحی سؤالات، منبع درسی، مفاد پیوست (حذفیات) و نوع آزمون به‌دقت لحاظ شود.</li>
+                                <li>سؤالات با توزیع منطقی و متوازن از کلیه مباحث منبع درسی تدوین شود.</li>
+                                <li>حتی‌الامکان، چینش سؤالات و گزینه‌ها به‌صورت تصادفی تنظیم شود.</li>
+                                <li>در مواردی که پاسخ هر سؤال مستقل از سایر سؤالات است، امکان بازگشت به سؤالات قبلی غیرفعال شود (به‌منظور کاهش احتمال تقلب و اشتراک‌گذاری سؤالات).</li>
+                                <li>در آزمون‌های تستی، حداقل ۳۰ سؤال و در آزمون‌های تشریحی، حداقل ۱۰ سؤال طراحی شود؛ به‌نحوی‌که به‌ترتیب ۲۴ سؤال تستی و ۴ سؤال تشریحی به‌صورت تصادفی برای هر دانشجو نمایش داده شود. (افزایش تعداد سؤالات در بانک، به ارتقای امنیت و سلامت آزمون کمک می‌کند.)</li>
+                            </ul>
+                            <p className="mb-0">
+                                شایان ذکر است هدف از تقسیم‌بندی و توزیع طراحی سؤالات میان اساتید، کاهش بار کاری و ایجاد وحدت رویه در شیوه‌های ارزیابی در سطح استان است.
+                                پیشاپیش از همکاری و دقت‌ نظر جنابعالی قدردانی می‌شود.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ================================ */}
+                {/* بخش جدول دروس */}
+                {/* ================================ */}
+                {loading ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">در حال بارگذاری...</span>
+                        </div>
+                        <p className="mt-2 text-muted">در حال دریافت اطلاعات...</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="table-responsive">
+                            <table className="table table-bordered table-hover table-striped">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>نام طراح سوال</th>
+                                        <th
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => handleSort('lesson')}
+                                        >
+                                            نام درس {getSortIcon('lesson')}
+                                        </th>
+                                        <th>مرکز و واحد درس</th>
+                                        <th>شماره درس و گروه</th>
+                                        <th>نوع امتحان</th>
+                                        <th
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => handleSort('sourceNo')}
+                                        >
+                                            شماره منبع {getSortIcon('sourceNo')}
+                                        </th>
+                                        <th>شرح پیوست</th>
+                                        <th
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => handleSort('examDate')}
+                                        >
+                                            تاریخ امتحان {getSortIcon('examDate')}
+                                        </th>
+                                        <th>ساعت شروع</th>
+                                        <th>روز هفته</th>
+                                        <th>نوع طراحی سوال</th>
+                                        <th>استاد درس</th>
+                                        <th>شماره همراه استاد</th>
+                                        <th
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => handleSort('registered')}
+                                        >
+                                            تعداد ثبت نام {getSortIcon('registered')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {exams.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="14" className="text-center text-muted py-4">
+                                                <i className="fa fa-info-circle ml-1"></i>
+                                                هیچ درسی یافت نشد
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        exams.map((exam) => {
+                                            const isBold = isTeacherAndDesignerSame(exam)
+                                            const rowStyle = isBold ? { fontWeight: 'bold', backgroundColor: '#f0f8ff' } : {}
+
+                                            return (
+                                                <tr key={exam.id} style={rowStyle}>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.questionDesigner || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.lesson || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.center || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.lessonNoGrp || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.examType || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.sourceNo || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.attachNo || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.examDate || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.start || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.dayOfWeek || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.questionType || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.teacher || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.mobile || '—'}</td>
+                                                    <td style={isBold ? { fontWeight: 'bold' } : {}}>{exam.registered}</td>
+                                                </tr>
+                                            )
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* ================================ */}
+                        {/* بخش صفحه‌بندی با قابلیت تایپ شماره صفحه */}
+                        {/* ================================ */}
+                        {totalCount > 0 && (
+                            <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                                <div>
+                                    <span className="text-muted">
+                                        نمایش {(page - 1) * pageSize + 1} تا {Math.min(page * pageSize, totalCount)} از {totalCount} رکورد
+                                    </span>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                    <nav>
+                                        <ul className="pagination mb-0">
+                                            <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                                <button className="page-link" onClick={() => setPage(page - 1)}>
+                                                    قبلی
+                                                </button>
+                                            </li>
+
+                                            {(() => {
+                                                const maxVisible = 5
+                                                let start = Math.max(1, page - Math.floor(maxVisible / 2))
+                                                let end = Math.min(totalPages, start + maxVisible - 1)
+
+                                                if (end - start + 1 < maxVisible) {
+                                                    start = Math.max(1, end - maxVisible + 1)
+                                                }
+
+                                                const nodes = []
+
+                                                if (start > 1) {
+                                                    nodes.push(
+                                                        <li key="first" className="page-item">
+                                                            <button className="page-link" onClick={() => setPage(1)}>1</button>
+                                                        </li>
+                                                    )
+                                                    if (start > 2) {
+                                                        nodes.push(
+                                                            <li key="start-ellipsis" className="page-item disabled">
+                                                                <span className="page-link">...</span>
+                                                            </li>
+                                                        )
+                                                    }
+                                                }
+
+                                                for (let i = start; i <= end; i++) {
+                                                    nodes.push(
+                                                        <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
+                                                            <button className="page-link" onClick={() => setPage(i)}>{i}</button>
+                                                        </li>
+                                                    )
+                                                }
+
+                                                if (end < totalPages) {
+                                                    if (end < totalPages - 1) {
+                                                        nodes.push(
+                                                            <li key="end-ellipsis" className="page-item disabled">
+                                                                <span className="page-link">...</span>
+                                                            </li>
+                                                        )
+                                                    }
+                                                    nodes.push(
+                                                        <li key="last" className="page-item">
+                                                            <button className="page-link" onClick={() => setPage(totalPages)}>{totalPages}</button>
+                                                        </li>
+                                                    )
+                                                }
+
+                                                return nodes
+                                            })()}
+
+                                            <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
+                                                <button className="page-link" onClick={() => setPage(page + 1)}>
+                                                    بعدی
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </nav>
+
+                                    {/* بخش تایپ شماره صفحه */}
+                                    <div className="d-flex align-items-center gap-1">
+                                        <span className="text-muted small">رفتن به صفحه</span>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            style={{ width: "70px", textAlign: "center" }}
+                                            value={pageInputValue}
+                                            onChange={handlePageInputChange}
+                                            onKeyDown={handlePageInputKeyDown}
+                                        />
+                                        <button
+                                            className="btn btn-sm btn-outline-secondary"
+                                            onClick={() => {
+                                                let newPage = parseInt(pageInputValue)
+                                                if (isNaN(newPage)) newPage = 1
+                                                newPage = Math.max(1, Math.min(newPage, totalPages))
+                                                setPage(newPage)
+                                            }}
+                                        >
+                                            برو
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
+    )
+}

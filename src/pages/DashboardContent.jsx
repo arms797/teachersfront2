@@ -22,6 +22,12 @@ const DailyTeachers = lazy(() => import('../components/dashboard/Reports/DailyTe
 const NormalizeTeachersButton = lazy(() => import('../components/dashboard/Teachers/NormalizeTeachers.jsx'))
 const TeachersSummary = lazy(() => import('../components/dashboard/Reports/RptTeachersSummary.jsx'))
 const CooperationLockManager = lazy(() => import('../components/dashboard/Teachers/CooperationLockManager.jsx'))
+const ManageExam = lazy(() => import('../components/dashboard/Exam/ManageExam.jsx'))
+const ExamList = lazy(() => import('../components/dashboard/Exam/ExamList.jsx'))
+const MyLessons = lazy(() => import('../components/dashboard/Exam/MyLessons.jsx'))
+
+
+
 
 
 export default function DashboardContent({ onLogout }) {
@@ -160,6 +166,25 @@ export default function DashboardContent({ onLogout }) {
                 return (
                     <Suspense fallback={<div>در حال بارگزاری صفحه مدیریت کامپوننت ها...</div>}>
                         {hasRole('admin') ? <ComponentFeaturesManager /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'exams-settings':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری...</div>}>
+                        {hasRole('admin') || hasRole('centerAdmin') ? <ManageExam /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'exams-list':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری لیست امتحانات...</div>}>
+                        {(hasRole('admin') || hasRole('centerAdmin') || hasRole('programmer'))
+                            ? <ExamList /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'exams-my-lessons':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری...</div>}>
+                        {hasRole('teacher') ? <MyLessons /> : <AccessDenied />}
                     </Suspense>
                 )
             default:
