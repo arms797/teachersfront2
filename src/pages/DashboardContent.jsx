@@ -25,9 +25,8 @@ const CooperationLockManager = lazy(() => import('../components/dashboard/Teache
 const ManageExam = lazy(() => import('../components/dashboard/Exam/ManageExam.jsx'))
 const ExamList = lazy(() => import('../components/dashboard/Exam/ExamList.jsx'))
 const MyLessons = lazy(() => import('../components/dashboard/Exam/MyLessons.jsx'))
-
-
-
+const MissingDesignerCode = lazy(() => import('../components/dashboard/Exam/MissingDesignerCode.jsx'))
+const MyDesignedLessons = lazy(() => import('../components/dashboard/Exam/MyDesignedLessons.jsx'))
 
 
 export default function DashboardContent({ onLogout }) {
@@ -185,6 +184,18 @@ export default function DashboardContent({ onLogout }) {
                 return (
                     <Suspense fallback={<div>در حال بارگذاری...</div>}>
                         {hasRole('teacher') ? <MyLessons /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'exams-missing-codes':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری...</div>}>
+                        {(hasRole('admin') || hasRole('centerAdmin')) ? <MissingDesignerCode /> : <AccessDenied />}
+                    </Suspense>
+                )
+            case 'exams-my-questions':
+                return (
+                    <Suspense fallback={<div>در حال بارگذاری...</div>}>
+                        {hasRole('teacher') ? <MyDesignedLessons /> : <AccessDenied />}
                     </Suspense>
                 )
             default:

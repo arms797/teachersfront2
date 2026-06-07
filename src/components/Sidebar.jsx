@@ -8,7 +8,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
     users: false,
     teachers: false,
     home: false,
-    exams: false  // اضافه شد
+    exams: true  // ✅ true = باز (پیش فرض)
   })
   const { hasRole, loading, userInfo } = useUser()
   const { activeTerm } = useTerms()
@@ -53,12 +53,12 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                 )}
 
                 {/* مشاهده دروس - دسترسی: فقط استاد */}
-                {hasRole('teacher') && (
+                {/*hasRole('teacher') && (
                   <div className="nav-item" onClick={() => onSelectPage('exams-my-lessons')}>
                     <i className="fa fa-book"></i>
-                    <span>مشاهده دروس</span>
+                    <span>مشاهده کلیه دروس</span>
                   </div>
-                )}
+                )*/}
 
                 {/* دروسی که طراح سوال هستم - دسترسی: فقط استاد */}
                 {hasRole('teacher') && (
@@ -79,7 +79,7 @@ export default function Sidebar({ onSelectPage, onLogout }) {
                 {/* تنظیمات - دسترسی: admin, centerAdmin */}
                 {(hasRole('admin') || hasRole('centerAdmin')) && (
                   <div className="nav-item" onClick={() => onSelectPage('exams-settings')}>
-                    <i className="fa fa-question-circle"></i>
+                    <i className="fa fa-gear"></i>
                     <span>تنظیمات امتحانات</span>
                   </div>
                 )}

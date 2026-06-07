@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../../../utils/apiClient.js'
 import { useUser } from '../../../context/UserContext.jsx'
 
-export default function ExamList() {
+export default function MissingDesignerCode() {
     const { hasRole } = useUser()
 
     // حالت‌های صفحه‌بندی و فیلترها
@@ -17,52 +17,49 @@ export default function ExamList() {
     const [pageInputValue, setPageInputValue] = useState('1')
 
     // فیلترها
-    const [teacher, setTeacher] = useState('')
-    const [centerCode, setCenterCode] = useState('')
-    const [lessonNo, setLessonNo] = useState('')
+    const [search, setSearch] = useState('')
     const [examDate, setExamDate] = useState('')
-    const [examType, setExamType] = useState('')
-    const [questionDesigner, setQuestionDesigner] = useState('')
-    const [sourceNo, setSourceNo] = useState('')
-    const [dayOfWeek, setDayOfWeek] = useState('')
 
-    // چک‌باکس عدم نمایش تاریخ‌های گذشته
-    const [hidePastDates, setHidePastDates] = useState(true)
+    // برای تیک زدن رکوردها
+    const [selectedIds, setSelectedIds] = useState([])
+    const [selectAll, setSelectAll] = useState(false)
+
+    // برای کد طراح سوال
+    const [designerCode, setDesignerCode] = useState('')
+    const [updating, setUpdating] = useState(false)
 
     // برای debounce
     const debounceTimer = useRef(null)
 
+    // بررسی اعتبار کد طراح سوال (۶ رقم عددی)
+    const isValidDesignerCode = designerCode.trim().length === 6 && /^\d+$/.test(designerCode.trim())
+
     // تابع دریافت داده‌ها
-    const fetchExams = useCallback(async () => {
+    const fetchMissingDesignerCodes = useCallback(async () => {
         setLoading(true)
         try {
             const params = new URLSearchParams()
             params.append('page', page)
             params.append('pageSize', pageSize)
-            if (teacher) params.append('search', teacher)
-            if (centerCode) params.append('centerCode', centerCode)
-            if (lessonNo) params.append('lessonNo', lessonNo)
+            if (search) params.append('search', search)
             if (examDate) params.append('examDate', examDate)
-            if (examType) params.append('examType', examType)
-            if (questionDesigner) params.append('questionDesigner', questionDesigner)
-            if (sourceNo) params.append('sourceNo', sourceNo)
-            if (dayOfWeek) params.append('dayOfWeek', dayOfWeek)
-            if (hidePastDates) params.append('hidePastDates', 'true')
 
-            const res = await api.get(`/api/exams/paged?${params.toString()}`)
+            const res = await api.get(`/api/exams/missing-designer-code?${params.toString()}`)
             setExams(res.items || [])
             setTotalCount(res.totalCount)
             setTotalPages(res.totalPages || Math.ceil(res.totalCount / pageSize))
             setPageInputValue(String(res.page || page))
+            setSelectedIds([])
+            setSelectAll(false)
         } catch (err) {
-            console.error('خطا در دریافت لیست امتحانات:', err)
-            alert('❌ خطا در دریافت لیست امتحانات')
+            console.error('خطا در دریافت اطلاعات:', err)
+            alert('❌ خطا در دریافت لیست دروس بدون کد طراح')
         } finally {
             setLoading(false)
         }
-    }, [page, teacher, centerCode, lessonNo, examDate, examType, questionDesigner, sourceNo, dayOfWeek, pageSize, hidePastDates])
+    }, [page, search, examDate, pageSize])
 
-    // debounce برای فیلترهایی که با تایپ تغییر می‌کنند
+    // debounce برای فیلترها
     useEffect(() => {
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current)
@@ -70,7 +67,7 @@ export default function ExamList() {
 
         debounceTimer.current = setTimeout(() => {
             if (page === 1) {
-                fetchExams()
+                fetchMissingDesignerCodes()
             } else {
                 setPage(1)
             }
@@ -81,24 +78,17 @@ export default function ExamList() {
                 clearTimeout(debounceTimer.current)
             }
         }
-    }, [teacher, centerCode, lessonNo, examDate, examType, questionDesigner, sourceNo, dayOfWeek, hidePastDates])
+    }, [search, examDate])
 
     // بارگذاری با تغییر صفحه
     useEffect(() => {
-        fetchExams()
+        fetchMissingDesignerCodes()
     }, [page])
 
     // تابع بازنشانی فیلترها
     const resetFilters = () => {
-        setTeacher('')
-        setCenterCode('')
-        setLessonNo('')
+        setSearch('')
         setExamDate('')
-        setExamType('')
-        setQuestionDesigner('')
-        setSourceNo('')
-        setDayOfWeek('')
-        setHidePastDates(false)
         setPage(1)
     }
 
@@ -120,8 +110,66 @@ export default function ExamList() {
         }
     }
 
-    // بررسی دسترسی
-    if (!hasRole('admin') && !hasRole('centerAdmin') && !hasRole('programmer')) {
+    // تابع تیک زدن یک رکورد
+    const handleSelect = (id) => {
+        setSelectedIds(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(i => i !== id)
+            } else {
+                return [...prev, id]
+            }
+        })
+    }
+
+    // تابع انتخاب همه
+    const handleSelectAll = () => {
+        if (selectAll) {
+            setSelectedIds([])
+        } else {
+            setSelectedIds(exams.map(e => e.id))
+        }
+        setSelectAll(!selectAll)
+    }
+
+    // تابع اعمال کد طراح سوال به رکوردهای انتخاب شده
+    const handleAssignCode = async () => {
+        if (selectedIds.length === 0) {
+            alert('⚠️ لطفا حداقل یک رکورد را انتخاب کنید')
+            return
+        }
+
+        if (!isValidDesignerCode) {
+            alert('⚠️ کد طراح سوال باید ۶ رقم عددی باشد')
+            return
+        }
+
+        if (!window.confirm(`آیا از اعمال کد "${designerCode}" به ${selectedIds.length} رکورد اطمینان دارید؟`)) {
+            return
+        }
+
+        setUpdating(true)
+        try {
+            const res = await api.post('/api/exams/assign-designer-code', {
+                ids: selectedIds,
+                designerCode: designerCode.trim()
+            })
+
+            alert(`✅ ${res.message || `${res.updatedCount} رکورد با موفقیت به‌روزرسانی شد`}`)
+
+            setSelectedIds([])
+            setSelectAll(false)
+            setDesignerCode('')
+            fetchMissingDesignerCodes()
+        } catch (err) {
+            console.error('خطا در اعمال کد:', err)
+            alert('❌ خطا در اعمال کد طراح سوال')
+        } finally {
+            setUpdating(false)
+        }
+    }
+
+    // بررسی دسترسی (فقط admin و centerAdmin)
+    if (!hasRole('admin') && !hasRole('centerAdmin')) {
         return (
             <div className="card shadow-sm">
                 <div className="card-body">
@@ -137,175 +185,126 @@ export default function ExamList() {
     return (
         <div className="card shadow-sm">
             <div className="card-body">
-                <div className="d-flex align-items-center mb-4">
-                    <i className="fa fa-table-list fa-2x text-primary ml-2"></i>
-                    <h4 className="card-title mb-0">لیست امتحانات</h4>
+                <div className="d-flex align-items-center mb-3">
+                    <i className="fa fa-question-circle fa-2x text-warning ml-2"></i>
+                    <h4 className="card-title mb-0">دروسی که کد طراح سوال ندارند</h4>
                 </div>
 
                 {/* ================================ */}
-                {/* بخش فیلترها */}
+                {/* بخش فیلترها + اختصاص کد در یک قاب */}
                 {/* ================================ */}
-                <div className="card mb-4 border-secondary">
-                    <div className="card-header bg-secondary text-white">
+                <div className="card mb-3 border-secondary">
+                    <div className="card-header bg-secondary text-white py-2">
                         <i className="fa fa-filter ml-2"></i>
-                        فیلترها
+                        فیلترها و اختصاص کد طراح سوال
                     </div>
-                    <div className="card-body">
-                        <div className="row g-3">
+                    <div className="card-body py-2">
+                        <div className="row g-2 align-items-end">
                             <div className="col-md-3">
-                                <label className="form-label">استاد درس</label>
+                                <label className="form-label small">جستجو</label>
                                 <input
                                     type="text"
-                                    className="form-control"
-                                    placeholder="نام، نام خانوادگی یا کد استاد"
-                                    value={teacher}
-                                    onChange={(e) => setTeacher(e.target.value)}
+                                    className="form-control form-control-sm"
+                                    placeholder="نام طراح سوال، نام درس..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
                             <div className="col-md-2">
-                                <label className="form-label">مرکز / کد مرکز</label>
+                                <label className="form-label small">تاریخ امتحان</label>
                                 <input
                                     type="text"
-                                    className="form-control"
-                                    placeholder="نام مرکز یا کد مرکز"
-                                    value={centerCode}
-                                    onChange={(e) => setCenterCode(e.target.value)}
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <label className="form-label">کد درس</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="کد درس"
-                                    value={lessonNo}
-                                    onChange={(e) => setLessonNo(e.target.value)}
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <label className="form-label">شماره منبع</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="شماره منبع"
-                                    value={sourceNo}
-                                    onChange={(e) => setSourceNo(e.target.value)}
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <label className="form-label">تاریخ امتحان</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
+                                    className="form-control form-control-sm"
                                     placeholder="1403/06/15"
                                     value={examDate}
                                     onChange={(e) => setExamDate(e.target.value)}
                                 />
                             </div>
                             <div className="col-md-2">
-                                <label className="form-label">روز هفته</label>
-                                <select
-                                    className="form-select"
-                                    value={dayOfWeek}
-                                    onChange={(e) => setDayOfWeek(e.target.value)}
-                                >
-                                    <option value="">همه روزها</option>
-                                    <option value="شنبه">شنبه</option>
-                                    <option value="یک شنبه">یک شنبه</option>
-                                    <option value="دوشنبه">دوشنبه</option>
-                                    <option value="سه شنبه">سه شنبه</option>
-                                    <option value="چهارشنبه">چهارشنبه</option>
-                                    <option value="پنجشنبه">پنجشنبه</option>
-                                    <option value="جمعه">جمعه</option>
-                                </select>
-                            </div>
-                            <div className="col-md-2">
-                                <label className="form-label">نوع امتحان</label>
-                                <select
-                                    className="form-select"
-                                    value={examType}
-                                    onChange={(e) => setExamType(e.target.value)}
-                                >
-                                    <option value="">همه</option>
-                                    <option value="استانی">استانی</option>
-                                    <option value="استاد محور">استاد محور</option>
-                                    <option value="مرکز/واحد">مرکز/واحد</option>
-                                </select>
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label">طراح سوال</label>
+                                <label className="form-label small">کد طراح سوال (۶ رقمی)</label>
                                 <input
                                     type="text"
-                                    className="form-control"
-                                    placeholder="نام یا کداستادی طراح سوال"
-                                    value={questionDesigner}
-                                    onChange={(e) => setQuestionDesigner(e.target.value)}
+                                    className="form-control form-control-sm"
+                                    placeholder="مثال: 123456"
+                                    value={designerCode}
+                                    onChange={(e) => setDesignerCode(e.target.value)}
+                                    maxLength={6}
                                 />
                             </div>
-
-                            {/* چک‌باکس عدم نمایش تاریخ‌های گذشته */}
-                            <div className="col-auto d-flex align-items-end">
-                                <div className="form-check d-flex align-items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        id="hidePastDates"
-                                        checked={hidePastDates}
-                                        onChange={(e) => setHidePastDates(e.target.checked)}
-                                        style={{ margin: "0 5px 0 0", position: "static" }}
-                                    />
-                                    <label className="form-check-label" htmlFor="hidePastDates" style={{ margin: 0, padding: 0 }}>
-                                        عدم نمایش تاریخ‌های گذشته
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="col-md-2 d-flex align-items-end">
-                                <button className="btn btn-outline-secondary w-100" onClick={resetFilters}>
-                                    <i className="fa fa-undo ml-2"></i>
-                                    پاک کردن فیلترها
+                            <div className="col-md-2">
+                                <button
+                                    className="btn btn-success btn-sm w-100"
+                                    onClick={handleAssignCode}
+                                    disabled={updating || selectedIds.length === 0 || !isValidDesignerCode}
+                                >
+                                    {updating ? (
+                                        <span className="spinner-border spinner-border-sm"></span>
+                                    ) : (
+                                        <><i className="fa fa-save ml-1"></i> اعمال کد</>
+                                    )}
                                 </button>
                             </div>
+                            <div className="col-md-2">
+                                <button className="btn btn-outline-secondary btn-sm w-100" onClick={resetFilters}>
+                                    <i className="fa fa-undo ml-1"></i> پاک کردن
+                                </button>
+                            </div>
+                            {selectedIds.length > 0 && (
+                                <div className="col-md-12 mt-2">
+                                    <div className="alert alert-info py-1 mb-0 small">
+                                        <i className="fa fa-info-circle ml-1"></i>
+                                        {selectedIds.length} رکورد برای اعمال کد انتخاب شده است
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* ================================ */}
-                {/* بخش جدول امتحانات */}
+                {/* بخش جدول */}
                 {/* ================================ */}
                 {loading ? (
-                    <div className="text-center py-5">
+                    <div className="text-center py-4">
                         <div className="spinner-border text-primary" role="status">
                             <span className="visually-hidden">در حال بارگذاری...</span>
                         </div>
-                        <p className="mt-2 text-muted">در حال دریافت اطلاعات...</p>
+                        <p className="mt-2 text-muted small">در حال دریافت اطلاعات...</p>
                     </div>
                 ) : (
                     <>
                         <div className="table-responsive">
-                            <table className="table table-bordered table-hover table-striped">
+                            <table className="table table-bordered table-hover table-striped table-sm">
                                 <thead className="table-light">
                                     <tr>
+                                        <th style={{ width: '35px' }}>
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input"
+                                                checked={selectAll}
+                                                onChange={handleSelectAll}
+                                                style={{ margin: 0 }}
+                                            />
+                                        </th>
                                         <th>نام طراح سوال</th>
                                         <th>نام درس</th>
-                                        <th>مرکز و واحد درس</th>
+                                        <th>مرکز</th>
                                         <th>شماره درس و گروه</th>
                                         <th>نوع امتحان</th>
                                         <th>شماره منبع</th>
-                                        <th>شرح پیوست</th>
                                         <th>تاریخ امتحان</th>
                                         <th>ساعت شروع</th>
-                                        <th>روز هفته</th>
                                         <th>نوع طراحی سوال</th>
                                         <th>استاد درس</th>
-                                        <th>شماره همراه استاد</th>
+                                        <th>شماره همراه</th>
                                         <th>تعداد ثبت نام</th>
+                                        <th className="text-danger">کد طراح</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {exams.length === 0 ? (
                                         <tr>
-                                            <td colSpan="14" className="text-center text-muted py-4">
+                                            <td colSpan="14" className="text-center text-muted py-3">
                                                 <i className="fa fa-info-circle ml-1"></i>
                                                 هیچ داده‌ای یافت نشد
                                             </td>
@@ -313,20 +312,28 @@ export default function ExamList() {
                                     ) : (
                                         exams.map((exam) => (
                                             <tr key={exam.id}>
-                                                <td>{exam.questionDesigner || '—'}</td>
-                                                <td>{exam.lesson || '—'}</td>
-                                                <td>{exam.center || '—'}</td>
-                                                <td>{exam.lessonNoGrp || '—'}</td>
-                                                <td>{exam.examType || '—'}</td>
-                                                <td>{exam.sourceNo || '—'}</td>
-                                                <td>{exam.attachNo || '—'}</td>
-                                                <td>{exam.examDate || '—'}</td>
-                                                <td>{exam.start || '—'}</td>
-                                                <td>{exam.dayOfWeek || '—'}</td>
-                                                <td>{exam.questionType || '—'}</td>
-                                                <td>{exam.teacher || '—'}</td>
-                                                <td>{exam.mobile || '—'}</td>
-                                                <td>{exam.registered}</td>
+                                                <td className="text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="form-check-input"
+                                                        checked={selectedIds.includes(exam.id)}
+                                                        onChange={() => handleSelect(exam.id)}
+                                                        style={{ margin: 0 }}
+                                                    />
+                                                </td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.questionDesigner || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.lesson || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.center || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.lessonNoGrp || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.examType || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.sourceNo || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.examDate || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.start || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.questionType || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.teacher || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.mobile || '—'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{exam.registered}</td>
+                                                <td className="text-danger fw-bold" style={{ fontSize: '0.85rem' }}>{exam.questionDesignerCode || 'نامشخص'}</td>
                                             </tr>
                                         ))
                                     )}
@@ -335,22 +342,20 @@ export default function ExamList() {
                         </div>
 
                         {/* ================================ */}
-                        {/* بخش صفحه‌بندی با قابلیت تایپ شماره صفحه */}
+                        {/* بخش صفحه‌بندی */}
                         {/* ================================ */}
                         {totalCount > 0 && (
-                            <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                            <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
                                 <div>
-                                    <span className="text-muted">
+                                    <span className="text-muted small">
                                         نمایش {(page - 1) * pageSize + 1} تا {Math.min(page * pageSize, totalCount)} از {totalCount} رکورد
                                     </span>
                                 </div>
                                 <div className="d-flex align-items-center gap-2">
                                     <nav>
-                                        <ul className="pagination mb-0">
+                                        <ul className="pagination pagination-sm mb-0">
                                             <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                                <button className="page-link" onClick={() => setPage(page - 1)}>
-                                                    قبلی
-                                                </button>
+                                                <button className="page-link" onClick={() => setPage(page - 1)}>قبلی</button>
                                             </li>
 
                                             {(() => {
@@ -406,26 +411,24 @@ export default function ExamList() {
                                             })()}
 
                                             <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
-                                                <button className="page-link" onClick={() => setPage(page + 1)}>
-                                                    بعدی
-                                                </button>
+                                                <button className="page-link" onClick={() => setPage(page + 1)}>بعدی</button>
                                             </li>
                                         </ul>
                                     </nav>
 
-                                    {/* بخش تایپ شماره صفحه */}
                                     <div className="d-flex align-items-center gap-1">
                                         <span className="text-muted small">رفتن به صفحه</span>
                                         <input
                                             type="text"
                                             className="form-control form-control-sm"
-                                            style={{ width: "70px", textAlign: "center" }}
+                                            style={{ width: "60px", textAlign: "center", fontSize: "0.75rem" }}
                                             value={pageInputValue}
                                             onChange={handlePageInputChange}
                                             onKeyDown={handlePageInputKeyDown}
                                         />
                                         <button
                                             className="btn btn-sm btn-outline-secondary"
+                                            style={{ fontSize: "0.7rem" }}
                                             onClick={() => {
                                                 let newPage = parseInt(pageInputValue)
                                                 if (isNaN(newPage)) newPage = 1
