@@ -8,12 +8,16 @@ export default function ManageExam() {
     const [normalizeLoading, setNormalizeLoading] = useState(false)
     const [updateCodeLoading, setUpdateCodeLoading] = useState(false)
     const [truncateLoading, setTruncateLoading] = useState(false)
+    const [uploadTeachersLoading, setUploadTeachersLoading] = useState(false)
 
     const [selectedFile, setSelectedFile] = useState(null)
     const [uploadResult, setUploadResult] = useState(null)
     const [normalizeResult, setNormalizeResult] = useState(null)
     const [updateCodeResult, setUpdateCodeResult] = useState(null)
     const [truncateResult, setTruncateResult] = useState(null)
+    const [uploadTeachersResult, setUploadTeachersResult] = useState(null)
+
+    const [selectedTeachersFile, setSelectedTeachersFile] = useState(null)
 
     // ================================
     // بخش 1: آپلود فایل اکسل امتحانات
@@ -49,7 +53,42 @@ export default function ManageExam() {
     }
 
     // ================================
-    // بخش 2: نرمال‌سازی امتحانات
+    // بخش 2: آپلود فایل اکسل اساتید
+    // ================================
+    const handleTeachersFileSelect = (e) => {
+        setSelectedTeachersFile(e.target.files[0])
+        setUploadTeachersResult(null)
+    }
+
+    const handleUploadTeachersExcel = async () => {
+        if (!selectedTeachersFile) {
+            alert('لطفا ابتدا فایل را انتخاب کنید')
+            return
+        }
+
+        const formData = new FormData()
+        formData.append('file', selectedTeachersFile)
+
+        setUploadTeachersLoading(true)
+        setUploadTeachersResult(null)
+
+        try {
+            const res = await api.post('/api/exams/upload-teachers-excel', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            setUploadTeachersResult(res)
+            alert(`✅ ${res.message}\nکل ردیف‌ها: ${res.totalRows}\nاضافه شده: ${res.addedCount}\nتکراری: ${res.duplicateCount}\nخطا: ${res.errorCount}`)
+        } catch (err) {
+            console.error('خطا در آپلود فایل اساتید:', err)
+            setUploadTeachersResult({ error: true, message: err.message })
+            alert('❌ خطا در آپلود فایل اساتید')
+        } finally {
+            setUploadTeachersLoading(false)
+        }
+    }
+
+    // ================================
+    // بخش 3: نرمال‌سازی امتحانات
     // ================================
     const handleNormalize = async () => {
         if (!window.confirm('آیا از انجام نرمال‌سازی حروف فارسی در تمام امتحانات اطمینان دارید؟')) return
@@ -69,7 +108,7 @@ export default function ManageExam() {
     }
 
     // ================================
-    // بخش 3: اختصاص کد طراح سوال
+    // بخش 4: اختصاص کد طراح سوال
     // ================================
     const handleUpdateDesignerCode = async () => {
         if (!window.confirm('آیا از به‌روزرسانی کد طراح سوال اطمینان دارید؟')) return
@@ -89,7 +128,7 @@ export default function ManageExam() {
     }
 
     // ================================
-    // بخش 4: حذف کامل کلیه امتحانات (Truncate)
+    // بخش 5: حذف کامل کلیه امتحانات (Truncate)
     // ================================
     const handleTruncateExams = async () => {
         const confirm1 = window.confirm('⚠️ هشدار مهم! این عملیات تمام رکوردهای جدول امتحانات را به طور کامل حذف می‌کند. آیا مطمئن هستید؟')
@@ -141,7 +180,7 @@ export default function ManageExam() {
                 </div>
 
                 {/* ================================ */}
-                {/* بخش اول: آپلود فایل اکسل */}
+                {/* بخش اول: آپلود فایل اکسل امتحانات */}
                 {/* ================================ */}
                 <div className="card mb-4 border-primary">
                     <div className="card-header bg-primary text-white">
@@ -218,7 +257,89 @@ export default function ManageExam() {
                 </div>
 
                 {/* ================================ */}
-                {/* بخش دوم: نرمال‌سازی امتحانات */}
+                {/* بخش دوم: آپلود فایل اکسل اساتید */}
+                {/* ================================ */}
+                <div className="card mb-4 border-info">
+                    <div className="card-header bg-info text-white">
+                        <i className="fa fa-users ml-2"></i>
+                        بارگذاری فایل اکسل اساتید
+                    </div>
+                    <div className="card-body">
+                        <p className="text-muted small mb-3">
+                            <i className="fa fa-info-circle ml-1"></i>
+                            ستون‌های فایل اکسل به ترتیب:
+                            <strong> کد استاد، نام، موبایل، مرکز، مرتبه علمی/مدرک</strong>
+                        </p>
+                        <div className="row align-items-end">
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">فایل اکسل اساتید را انتخاب کنید</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept=".xlsx, .xls"
+                                    onChange={handleTeachersFileSelect}
+                                    disabled={uploadTeachersLoading}
+                                />
+                                <small className="text-muted">
+                                    فرمت فایل باید .xlsx یا .xls باشد
+                                </small>
+                            </div>
+                            <div className="col-md-3">
+                                <button
+                                    className="btn btn-info w-100 text-white"
+                                    onClick={handleUploadTeachersExcel}
+                                    disabled={uploadTeachersLoading || !selectedTeachersFile}
+                                >
+                                    {uploadTeachersLoading ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                            در حال بارگذاری...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa fa-upload ml-2"></i>
+                                            بارگذاری اساتید
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <div className="col-md-3 text-center">
+                                {selectedTeachersFile && !uploadTeachersLoading && (
+                                    <span className="text-success">
+                                        <i className="fa fa-check-circle"></i> فایل انتخاب شد: {selectedTeachersFile.name}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {uploadTeachersResult && !uploadTeachersResult.error && (
+                            <div className="alert alert-success mt-3">
+                                <div className="d-flex align-items-center">
+                                    <i className="fa fa-check-circle fa-2x ml-2"></i>
+                                    <div>
+                                        <strong>نتیجه بارگذاری اساتید:</strong><br />
+                                        <div className="row mt-2">
+                                            <div className="col-md-4">📊 کل ردیف‌ها: {uploadTeachersResult.totalRows}</div>
+                                            <div className="col-md-4">✅ اضافه شده: {uploadTeachersResult.addedCount}</div>
+                                            <div className="col-md-4">🔄 تکراری: {uploadTeachersResult.duplicateCount}</div>
+                                            <div className="col-md-4 mt-1">❌ خطا: {uploadTeachersResult.errorCount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {uploadTeachersResult?.error && (
+                            <div className="alert alert-danger mt-3">
+                                <i className="fa fa-exclamation-triangle ml-2"></i>
+                                خطا در آپلود فایل اساتید: {uploadTeachersResult.message}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ================================ */}
+                {/* بخش سوم: نرمال‌سازی امتحانات */}
                 {/* ================================ */}
                 <div className="card mb-4 border-warning">
                     <div className="card-header bg-warning text-dark">
@@ -267,7 +388,7 @@ export default function ManageExam() {
                 </div>
 
                 {/* ================================ */}
-                {/* بخش سوم: اختصاص کد طراح سوال */}
+                {/* بخش چهارم: اختصاص کد طراح سوال */}
                 {/* ================================ */}
                 <div className="card mb-4 border-success">
                     <div className="card-header bg-success text-white">
@@ -322,7 +443,7 @@ export default function ManageExam() {
                 </div>
 
                 {/* ================================ */}
-                {/* بخش چهارم: حذف کامل کلیه امتحانات */}
+                {/* بخش پنجم: حذف کامل کلیه امتحانات */}
                 {/* ================================ */}
                 <div className="card mb-4 border-danger">
                     <div className="card-header bg-danger text-white">
@@ -333,7 +454,7 @@ export default function ManageExam() {
                         <p className="text-muted small mb-3">
                             <i className="fa fa-exclamation-triangle text-danger ml-1"></i>
                             <strong className="text-danger">هشدار:</strong> این عملیات <strong className="text-danger">تمام رکوردهای جدول امتحانات</strong> را به طور کامل حذف می‌کند.
-                        این عمل غیرقابل بازگشت است.
+                            این عمل غیرقابل بازگشت است.
                         </p>
                         <button
                             className="btn btn-danger"

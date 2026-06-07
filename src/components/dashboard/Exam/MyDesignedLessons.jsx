@@ -97,10 +97,12 @@ export default function MyDesignedLessons() {
             : <i className="fa fa-sort-desc text-primary ms-1" style={{ fontSize: '12px' }}></i>
     }
 
-    // تابع تبدیل اعداد به فارسی
-    function toPersianDigits(str) {
+    // تابع تبدیل اعداد به فارسی (اصلاح شده)
+    function toPersianDigits(input) {
+        if (input === undefined || input === null) return ''
+        const str = input.toString()
         const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹']
-        return str.toString().replace(/\d/g, d => persianDigits[d])
+        return str.replace(/\d/g, d => persianDigits[parseInt(d)])
     }
 
     // تابع چاپ
@@ -110,20 +112,20 @@ export default function MyDesignedLessons() {
         // ساخت HTML برای چاپ
         const rows = exams.map(exam => `
             <tr>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.questionDesigner || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.lesson || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.center || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.lessonNoGrp || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.examType || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.sourceNo || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.attachNo || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.examDate || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.start || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.dayOfWeek || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.questionType || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.teacher || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${exam.mobile || '—'}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${exam.registered}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.questionDesigner || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.lesson || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.center || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.lessonNoGrp || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.examType || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.sourceNo || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.attachNo || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.examDate || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.start || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.dayOfWeek || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.questionType || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.teacher || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: right;">${exam.mobile || '—'}</td>
+                <td style="border: 1px solid #999; padding: 6px; text-align: center;">${exam.registered}</td>
             </tr>
         `).join('')
 
@@ -132,7 +134,12 @@ export default function MyDesignedLessons() {
         <html dir="rtl">
         <head>
             <meta charset="UTF-8">
+            <title>لیست دروس جهت طراحی سوال - نیمسال ${activeTerm}</title>
             <style>
+                @page {
+                    size: landscape;  /* ✅ تنظیم حالت Landscape برای چاپ */
+                    margin: 10mm;
+                }
                 @font-face {
                     font-family: 'Vazirmatn';
                     src: url(${fontAddress}) format('woff2');
@@ -141,56 +148,83 @@ export default function MyDesignedLessons() {
                     font-family: 'Vazirmatn', sans-serif;
                     direction: rtl;
                     text-align: right;
-                    padding: 40px;
+                    padding: 20px;
                     background-color: #fff;
                 }
                 .header {
                     text-align: center;
-                    margin-bottom: 30px;
+                    margin-bottom: 25px;
                 }
                 .header img {
-                    width: 80px;
+                    width: 70px;
                     height: auto;
-                    margin-bottom: 10px;
+                    margin-bottom: 8px;
                 }
                 .header h2 {
-                    font-size: 18px;
+                    font-size: 16px;
                     margin: 5px 0;
                     color: #002864;
                 }
-                .info-text {
-                    margin: 20px 0;
-                    line-height: 1.8;
+                .header h3 {
                     font-size: 14px;
+                    margin: 5px 0;
+                    color: #555;
+                }
+                .info-text {
+                    margin: 15px 0;
+                    line-height: 1.6;
+                    font-size: 12px;
                 }
                 .info-text p {
-                    margin: 8px 0;
+                    margin: 6px 0;
                 }
                 .info-text ul {
-                    margin: 10px 0;
+                    margin: 8px 0;
                     padding-right: 20px;
                 }
                 .info-text li {
-                    margin: 5px 0;
+                    margin: 4px 0;
+                }
+                .info-text span {
+                    display: block;
+                    margin-right: 20px;
+                    margin-bottom: 5px;
                 }
                 table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-top: 20px;
-                    font-size: 12px;
+                    margin-top: 15px;
+                    font-size: 11px;
+                    table-layout: fixed;
                 }
                 th, td {
-                    border: 1px solid #333;
-                    padding: 8px;
+                    border: 1px solid #999;
+                    padding: 5px;
                     text-align: center;
                     vertical-align: middle;
+                    word-wrap: break-word;
                 }
                 th {
-                    background-color: #f5f5f5;
+                    background-color: #f2f2f2;
                     font-weight: bold;
                 }
+                /* عرض ثابت برای ستون‌ها */
+                th:nth-child(1), td:nth-child(1) { width: 7%; }
+                th:nth-child(2), td:nth-child(2) { width: 10%; }
+                th:nth-child(3), td:nth-child(3) { width: 8%; }
+                th:nth-child(4), td:nth-child(4) { width: 8%; }
+                th:nth-child(5), td:nth-child(5) { width: 7%; }
+                th:nth-child(6), td:nth-child(6) { width: 6%; }
+                th:nth-child(7), td:nth-child(7) { width: 6%; }
+                th:nth-child(8), td:nth-child(8) { width: 8%; }
+                th:nth-child(9), td:nth-child(9) { width: 6%; }
+                th:nth-child(10), td:nth-child(10) { width: 6%; }
+                th:nth-child(11), td:nth-child(11) { width: 7%; }
+                th:nth-child(12), td:nth-child(12) { width: 9%; }
+                th:nth-child(13), td:nth-child(13) { width: 7%; }
+                th:nth-child(14), td:nth-child(14) { width: 5%; }
                 .signatures {
-                    margin-top: 40px;
+                    margin-top: 30px;
                     width: 100%;
                     border: none;
                 }
@@ -198,10 +232,11 @@ export default function MyDesignedLessons() {
                     border: none;
                     text-align: center;
                     font-weight: bold;
+                    width: 33%;
                 }
                 @media print {
                     body {
-                        padding: 20px;
+                        padding: 10px;
                     }
                     button {
                         display: none;
@@ -212,7 +247,7 @@ export default function MyDesignedLessons() {
         <body>
             <div class="header">
                 <img src="${logo}" alt="آرم دانشگاه" />
-                <h2>لیست دروس جهت طراحی سوال در نیمسال ${toPersianDigits(activeTerm)}</h2>                
+                <h2>لیست دروس جهت طراحی سوال در نیمسال ${toPersianDigits(activeTerm)}</h2>
             </div>
 
             <div class="info-text">
@@ -224,7 +259,7 @@ export default function MyDesignedLessons() {
                 <p>همچنین در تنظیم ویژگی‌های آزمون، رعایت موارد زیر ضروری است:</p>
                 <ul>
                     <li>عنوان آزمون به‌صورت کامل درج شود (برای نمونه: «آزمون پایان‌ترم درس زبان تخصصی مدیریت»).</li>
-                    <li>تاریخ و زمان شروع آزمون مطابق با زمان‌بندی اعلام‌شده تنظیم و زمان تأخیر مجاز ورود به آزمون حداقل ۵ دقیقه تعیین شود.</li>
+                    <li>تاریخ و زمان شروع آزمون مطابق با زمان‌بندی اعلام‌شده تنظیم و زمان تأخیر مجاز ورود به آزمون حداقل ۱۰ دقیقه تعیین شود.</li>
                     <li>در بخش توضیحات آزمون تصریح شود که امکان بازگشت به سؤالات قبلی و اصلاح پاسخ‌ها وجود ندارد.</li>
                     <li>گزینه‌های «نمایش نمره»، «نمایش هر سؤال در یک صفحه»، «تصادفی سازی سوالات» و «تصادفی‌سازی ترتیب گزینه‌ها» فعال و گزینه «امکان بازگشت و ویرایش پاسخ پس از ثبت» غیرفعال باشد.</li>
                     <li>مدت پاسخ‌گویی هر سؤال متناسب با سطح دشواری و نوع آن تعیین و برای هر سؤال حداقل یک دقیقه در نظر گرفته شود.</li>
@@ -233,9 +268,15 @@ export default function MyDesignedLessons() {
                     <li>حتی‌الامکان، چینش سؤالات و گزینه‌ها به‌صورت تصادفی تنظیم شود.</li>
                     <li>در مواردی که پاسخ هر سؤال مستقل از سایر سؤالات است، امکان بازگشت به سؤالات قبلی غیرفعال شود (به‌منظور کاهش احتمال تقلب و اشتراک‌گذاری سؤالات).</li>
                     <li>در آزمون‌های تستی، حداقل ۳۰ سؤال و در آزمون‌های تشریحی، حداقل ۱۰ سؤال طراحی شود؛ به‌نحوی‌که به‌ترتیب ۲۴ سؤال تستی و ۴ سؤال تشریحی به‌صورت تصادفی برای هر دانشجو نمایش داده شود. (افزایش تعداد سؤالات در بانک، به ارتقای امنیت و سلامت آزمون کمک می‌کند.)</li>
+                    <li><strong>تذکر مهم:</strong> در ستون «نوع طراحی سؤال»، سه عنوان به شرح ذیل درج گردیده است:</li>
                 </ul>
-                <p>شایان ذکر است هدف از تقسیم‌بندی و توزیع طراحی سؤالات میان اساتید، کاهش بار کاری و ایجاد وحدت رویه در شیوه‌های ارزیابی در سطح استان است.
-                پیشاپیش از همکاری و دقت‌ نظر جنابعالی قدردانی می‌شود.</p>
+                <span><strong>استانی:</strong> دروسی که تعداد دانشجویان آن‌ها در مقطع کارشناسی بیش از ۷۰ نفر و در مقطع کارشناسی ارشد بیش از ۳۰ نفر در سطح استان می‌باشد. طراحی سؤالات این دروس توسط ستاد امتحانات استان تعیین و ابلاغ شده و پیگیری امور مربوطه از طریق تیم پشتیبانی استان (جناب آقای یزدانی) انجام می‌پذیرد. </span>
+                <span><strong>مرکز/واحد:</strong> دروسی که تعداد دانشجویان آن‌ها کمتر از حد نصاب بند فوق است. طراحی سؤالات این دروس توسط استاد مربوطه انجام شده و برگزاری آزمون الزامی می‌باشد. مسئولیت پیگیری این بخش بر عهده مرکز/واحد ارائه‌دهنده درس است. </span>
+                <span><strong>استادمحور:</strong> دروسی که تعداد دانشجویان آن‌ها در مقطع کارشناسی کمتر از ۱۰ نفر و در مقطع کارشناسی ارشد کمتر از ۶ نفر می‌باشد. در این موارد، شیوه ارزشیابی به استاد درس واگذار شده و پیگیری آن بر عهده مرکز/واحد ارائه‌دهنده درس است.</span>
+                <p className="mb-0 mt-2">
+                    شایان ذکر است هدف از تقسیم‌بندی و توزیع طراحی سؤالات میان اساتید، کاهش بار کاری و ایجاد وحدت رویه در شیوه‌های ارزیابی در سطح استان است.
+                    پیشاپیش از همکاری و دقت‌ نظر جنابعالی قدردانی می‌شود.
+                </p>
             </div>
 
             <table>
@@ -262,7 +303,20 @@ export default function MyDesignedLessons() {
                 </tbody>
             </table>
 
-            
+            <table class="signatures">
+                <tr>          
+                    <td></td> 
+                    <td></td>          
+                    <td style="border: none; text-align: center; font-weight: bold;"> معاونت آموزش و تحصیلات تکمیلی </td}
+                </tr>
+                <tr>          
+                    <td></td> 
+                    <td></td>          
+                    <td style="border: none; text-align: center; font-weight: bold;">دکتر خلیلی صفری</td}
+                </tr>
+                
+            </table>
+
             <script>
                 window.onload = function() {
                     window.print();
@@ -316,7 +370,7 @@ export default function MyDesignedLessons() {
                             </p>
                             <ul className="mb-2">
                                 <li>عنوان آزمون به‌صورت کامل درج شود (برای نمونه: «آزمون پایان‌ترم درس زبان تخصصی مدیریت»).</li>
-                                <li>تاریخ و زمان شروع آزمون مطابق با زمان‌بندی اعلام‌شده تنظیم و زمان تأخیر مجاز ورود به آزمون حداقل ۵ دقیقه تعیین شود.</li>
+                                <li>تاریخ و زمان شروع آزمون مطابق با زمان‌بندی اعلام‌شده تنظیم و زمان تأخیر مجاز ورود به آزمون حداقل ۱۰ دقیقه تعیین شود.</li>
                                 <li>در بخش توضیحات آزمون تصریح شود که امکان بازگشت به سؤالات قبلی و اصلاح پاسخ‌ها وجود ندارد.</li>
                                 <li>گزینه‌های «نمایش نمره»، «نمایش هر سؤال در یک صفحه»، «تصادفی سازی سوالات» و «تصادفی‌سازی ترتیب گزینه‌ها» فعال و گزینه «امکان بازگشت و ویرایش پاسخ پس از ثبت» غیرفعال باشد.</li>
                                 <li>مدت پاسخ‌گویی هر سؤال متناسب با سطح دشواری و نوع آن تعیین و برای هر سؤال حداقل یک دقیقه در نظر گرفته شود.</li>
@@ -325,8 +379,12 @@ export default function MyDesignedLessons() {
                                 <li>حتی‌الامکان، چینش سؤالات و گزینه‌ها به‌صورت تصادفی تنظیم شود.</li>
                                 <li>در مواردی که پاسخ هر سؤال مستقل از سایر سؤالات است، امکان بازگشت به سؤالات قبلی غیرفعال شود (به‌منظور کاهش احتمال تقلب و اشتراک‌گذاری سؤالات).</li>
                                 <li>در آزمون‌های تستی، حداقل ۳۰ سؤال و در آزمون‌های تشریحی، حداقل ۱۰ سؤال طراحی شود؛ به‌نحوی‌که به‌ترتیب ۲۴ سؤال تستی و ۴ سؤال تشریحی به‌صورت تصادفی برای هر دانشجو نمایش داده شود. (افزایش تعداد سؤالات در بانک، به ارتقای امنیت و سلامت آزمون کمک می‌کند.)</li>
+                                <li><strong>تذکر مهم:</strong> در ستون «نوع طراحی سؤال»، سه عنوان به شرح ذیل درج گردیده است:</li>
                             </ul>
-                            <p className="mb-0">
+                            <span><strong>استانی:</strong> دروسی که تعداد دانشجویان آن‌ها در مقطع کارشناسی بیش از ۷۰ نفر و در مقطع کارشناسی ارشد بیش از ۳۰ نفر در سطح استان می‌باشد. طراحی سؤالات این دروس توسط ستاد امتحانات استان تعیین و ابلاغ شده و پیگیری امور مربوطه از طریق تیم پشتیبانی استان (جناب آقای یزدانی) انجام می‌پذیرد. </span>
+                            <br /><span><strong>مرکز/واحد:</strong> دروسی که تعداد دانشجویان آن‌ها کمتر از حد نصاب بند فوق است. طراحی سؤالات این دروس توسط استاد مربوطه انجام شده و برگزاری آزمون الزامی می‌باشد. مسئولیت پیگیری این بخش بر عهده مرکز/واحد ارائه‌دهنده درس است. </span>
+                            <br /><span><strong>استادمحور:</strong> دروسی که تعداد دانشجویان آن‌ها در مقطع کارشناسی کمتر از ۱۰ نفر و در مقطع کارشناسی ارشد کمتر از ۶ نفر می‌باشد. در این موارد، شیوه ارزشیابی به استاد درس واگذار شده و پیگیری آن بر عهده مرکز/واحد ارائه‌دهنده درس است.</span>
+                            <p className="mb-0 mt-2">
                                 شایان ذکر است هدف از تقسیم‌بندی و توزیع طراحی سؤالات میان اساتید، کاهش بار کاری و ایجاد وحدت رویه در شیوه‌های ارزیابی در سطح استان است.
                                 پیشاپیش از همکاری و دقت‌ نظر جنابعالی قدردانی می‌شود.
                             </p>
