@@ -4,6 +4,7 @@ import { useUser } from '../../../context/UserContext.jsx'
 import fontAddress from '../../../assets/fonts/Vazir/Vazir-Regular.woff2'
 import logo from '../../../assets/logo.png'
 import { useTerms } from '../../../context/TermContext.jsx'
+import signator from '../../../assets/signator.svg'
 
 export default function MyDesignedLessons() {
     const { hasRole, userInfo } = useUser()
@@ -39,11 +40,12 @@ export default function MyDesignedLessons() {
 
             // جستجو بر اساس نام استاد جاری (طراح سوال)
             if (userInfo?.fullName) {
-                params.append('questionDesigner', userInfo.fullName)
-            } else if (userInfo?.username) {
                 params.append('questionDesigner', userInfo.username)
-            }
+            } else if (userInfo?.username) {
 
+                params.append('questionDesigner', userInfo.fullName)
+            }
+            params.append('pageSize', 1000)
             const res = await api.get(`/api/exams/paged?${params.toString()}`)
 
             let sortedItems = res.items || []
@@ -303,18 +305,19 @@ export default function MyDesignedLessons() {
                 </tbody>
             </table>
 
-            <table class="signatures">
-                <tr>          
-                    <td></td> 
-                    <td></td>          
-                    <td style="border: none; text-align: center; font-weight: bold;"> معاونت آموزش و تحصیلات تکمیلی </td}
+           <table class="signatures">
+                <tr>
+                    <td style="border: none; text-align: center;">&nbsp;</td>
+                    <td style="border: none; text-align: center;">&nbsp;</td>
+                    <td style="border: none; text-align: center; position: relative;">
+                        <div>دکتر خلیل صفری</div>
+                        <div style="position: relative; display: inline-block;">
+                            <div>معاون آموزشی و تحصیلات تکمیلی</div>
+                            <img src="${signator}" alt="امضا" style="position: absolute; top: -15px; left: 0; width: 100px; height: auto; opacity: 0.8;" />
+                            <div>دانشگاه پیام نور استان فارس</div>
+                            </div>
+                    </td>
                 </tr>
-                <tr>          
-                    <td></td> 
-                    <td></td>          
-                    <td style="border: none; text-align: center; font-weight: bold;">دکتر خلیلی صفری</td}
-                </tr>
-                
             </table>
 
             <script>
